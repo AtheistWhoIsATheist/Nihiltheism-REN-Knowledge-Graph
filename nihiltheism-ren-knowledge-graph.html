@@ -1,0 +1,1480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JOURNAL314 Ω — Nihiltheistic Hypermap Visual</title>
+<style>
+:root {
+  --ink: #f6f7ff;
+  --muted: #b8bddf;
+  --bg: #070711;
+  --panel: #11112a;
+  --node: #191959;
+  --node2: #242477;
+  --line: #5252ff;
+  --accent: #b9b9ff;
+  --leaf: #161626;
+  --hit: #fff0a8;
+  --hit-ink: #151515;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(82,82,255,.28), transparent 35rem),
+    radial-gradient(circle at bottom right, rgba(185,185,255,.18), transparent 34rem),
+    var(--bg);
+  line-height: 1.35;
+}
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 1rem clamp(1rem, 3vw, 2rem);
+  background: rgba(7,7,17,.84);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(185,185,255,.24);
+}
+h1 {
+  margin: 0 0 .35rem;
+  font-size: clamp(1.45rem, 3vw, 2.55rem);
+  letter-spacing: -.03em;
+}
+.meta {
+  color: var(--muted);
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: .95rem;
+}
+.controls {
+  display: flex;
+  gap: .65rem;
+  flex-wrap: wrap;
+  margin-top: .9rem;
+}
+button, input {
+  border: 1px solid rgba(185,185,255,.32);
+  border-radius: 999px;
+  color: var(--ink);
+  background: rgba(25,25,89,.72);
+  padding: .65rem .9rem;
+  font-size: .94rem;
+}
+button { cursor: pointer; }
+button:hover { background: rgba(82,82,255,.35); }
+input {
+  min-width: min(100%, 22rem);
+  outline: none;
+}
+main {
+  padding: 1.25rem clamp(1rem, 3vw, 2rem) 3rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.map {
+  display: grid;
+  gap: 1rem;
+}
+details, .leaf {
+  position: relative;
+  margin: .45rem 0 .45rem 1rem;
+  padding-left: 1rem;
+  border-left: 2px solid rgba(82,82,255,.42);
+}
+summary, .leaf {
+  list-style: none;
+  border: 1px solid rgba(185,185,255,.22);
+  border-radius: 14px;
+  padding: .62rem .75rem;
+  background: linear-gradient(135deg, rgba(25,25,89,.95), rgba(17,17,42,.95));
+  box-shadow: 0 12px 30px rgba(0,0,0,.20);
+}
+summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+summary::-webkit-details-marker { display: none; }
+summary::before {
+  content: "+";
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 1.35rem;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: rgba(185,185,255,.18);
+  color: var(--accent);
+  font-weight: 700;
+}
+details[open] > summary::before { content: "–"; }
+.children {
+  margin-left: .25rem;
+  padding-left: .25rem;
+}
+.root-node > summary {
+  background: linear-gradient(135deg, var(--node), #2c2ca0);
+  border-color: rgba(255,255,255,.28);
+  font-size: 1.06rem;
+}
+.level-1 > summary { background: linear-gradient(135deg, #1c1c69, #151542); }
+.level-2 > summary { background: linear-gradient(135deg, #20205e, #14142d); }
+.level-3 > summary { background: linear-gradient(135deg, #1b1b4b, #121224); }
+.level-4 > summary { background: linear-gradient(135deg, #17173a, #11111d); }
+.leaf {
+  background: rgba(22,22,38,.86);
+  color: #e9eaff;
+  margin-left: 2rem;
+}
+.node-label {
+  overflow-wrap: anywhere;
+}
+.count {
+  margin-left: auto;
+  color: var(--muted);
+  background: rgba(255,255,255,.08);
+  border-radius: 999px;
+  padding: .16rem .5rem;
+  font-size: .78rem;
+}
+.match .node-label {
+  background: var(--hit);
+  color: var(--hit-ink);
+  border-radius: .35rem;
+  padding: .05rem .18rem;
+}
+.hidden-by-search { display: none; }
+.footer-note {
+  margin-top: 2rem;
+  color: var(--muted);
+  font-size: .95rem;
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>JOURNAL314 Ω — Nihiltheistic Hypermap Visual</h1>
+  <div class="meta">
+    <span>2 unique root trees</span>
+    <span>1808 preserved nodes</span>
+    <span>Interactive collapsible view</span>
+  </div>
+  <div class="controls">
+    <button onclick="setAll(true)">Expand all</button>
+    <button onclick="setAll(false)">Collapse all</button>
+    <input id="search" placeholder="Search the mindmap..." oninput="searchMap(this.value)">
+  </div>
+</header>
+<main>
+  <section class="map" id="map">
+
+    <details open class="level-0 root-node"><summary><span class="node-label">JOURNAL314 Ω — Nihiltheistic Hypermarkmap</span><span class="count">1</span></summary>
+<div class="children">
+<details open class="level-1 "><summary><span class="node-label">0. Orientation: The Map Is Not a Summary</span><span class="count">1</span></summary>
+<div class="children">
+<details class="level-2 "><summary><span class="node-label">Knowledge-distribution engine</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-3 "><summary><span class="node-label">Absorbs original 314 Markmap</span><span class="count">4</span></summary>
+<div class="children">
+<details class="level-4 "><summary><span class="node-label">Original Structure</span><span class="count">4</span></summary>
+<div class="children">
+<details class="level-5 "><summary><span class="node-label">Theme</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Key concepts</span></div>
+<div class="leaf level-6 "><span class="node-label">Major topics</span></div>
+<div class="leaf level-6 "><span class="node-label">Relevant issues</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Figure</span><span class="count">1</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Notable figures</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Philosophers</span></div>
+<div class="leaf level-6 "><span class="node-label">Authors</span></div>
+<div class="leaf level-6 "><span class="node-label">Thinkers</span></div>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Quote-fragment</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Significant statements</span></div>
+<div class="leaf level-6 "><span class="node-label">Contextual importance</span></div>
+<div class="leaf level-6 "><span class="node-label">Reflection prompts</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Recurrence-signal</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Patterns in thought</span></div>
+<div class="leaf level-6 "><span class="node-label">Common themes</span></div>
+<div class="leaf level-6 "><span class="node-label">Repeated phrases</span></div>
+</div></details>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Preservation Features</span><span class="count">6</span></summary>
+<div class="children">
+<details class="level-5 "><summary><span class="node-label">Conceptual continuity</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Maintaining core ideas</span></div>
+<div class="leaf level-6 "><span class="node-label">Connecting themes over time</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Thematic relevance</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Addressing contemporary issues</span></div>
+<div class="leaf level-6 "><span class="node-label">Aligning with current discourse</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Signal retention</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Key concepts highlighted</span></div>
+<div class="leaf level-6 "><span class="node-label">Identifying significant phrases</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Content fidelity</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Original meanings preserved</span></div>
+<div class="leaf level-6 "><span class="node-label">Authentic representation of thoughts</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Adaptive integration</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Tailoring to diverse audiences</span></div>
+<div class="leaf level-6 "><span class="node-label">Balancing rigor and accessibility</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Stability across revisions</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Consistent structure</span></div>
+<div class="leaf level-6 "><span class="node-label">Evolution without loss of essence</span></div>
+</div></details>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Integration Process</span><span class="count">5</span></summary>
+<div class="children">
+<details class="level-5 "><summary><span class="node-label">Content Curation</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Content filtering</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Relevance assessment</span></div>
+<div class="leaf level-6 "><span class="node-label">Quality checks</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Selection principles</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Criteria for inclusion</span></div>
+<div class="leaf level-6 "><span class="node-label">Elimination of redundancy</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Contextual modifications</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Tailoring themes</span></div>
+<div class="leaf level-6 "><span class="node-label">Adjusting tone and style</span></div>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Collaboration</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Stakeholder input</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Feedback loops</span></div>
+<div class="leaf level-6 "><span class="node-label">Engaging experts</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Multidisciplinary approach</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Incorporating diverse fields</span></div>
+<div class="leaf level-6 "><span class="node-label">Cross-sectional collaboration</span></div>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Continuous Improvement</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Iterative revisions</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Reviewing effectiveness</span></div>
+<div class="leaf level-6 "><span class="node-label">Updating based on feedback</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Performance metrics</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Measuring impact</span></div>
+<div class="leaf level-6 "><span class="node-label">Analyzing user engagement</span></div>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Accessibility</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">User-friendly design</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Simplified navigation</span></div>
+<div class="leaf level-6 "><span class="node-label">Visual aids integration</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Diverse formats</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Text, audio, video</span></div>
+<div class="leaf level-6 "><span class="node-label">Interactive events and discussions</span></div>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Knowledge Sharing</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Community building</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Forum creation</span></div>
+<div class="leaf level-6 "><span class="node-label">Resource-sharing initiatives</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Open access policies</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Public availability</span></div>
+<div class="leaf level-6 "><span class="node-label">Elimination of paywalls</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Utility</span><span class="count">5</span></summary>
+<div class="children">
+<details class="level-5 "><summary><span class="node-label">Enhanced Understanding</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Deepens knowledge retention</span></div>
+<div class="leaf level-6 "><span class="node-label">Facilitates theory application</span></div>
+<div class="leaf level-6 "><span class="node-label">Promotes critical inquiry</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Comparative Analysis</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Evaluation of philosophical schools</span></div>
+<div class="leaf level-6 "><span class="node-label">Contrasting varying worldviews</span></div>
+<div class="leaf level-6 "><span class="node-label">Synthesizing insights and critiques</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Framework for Discourse</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Structured philosophical dialogues</span></div>
+<div class="leaf level-6 "><span class="node-label">Resources for academic debates</span></div>
+<div class="leaf level-6 "><span class="node-label">Platforms for public engagement</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Practical Applications</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Integration in educational settings</span></div>
+<div class="leaf level-6 "><span class="node-label">Utilization in therapy and counseling</span></div>
+<div class="leaf level-6 "><span class="node-label">Influence on art and creative expression</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Informing Future Research</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Identifying gaps in literature</span></div>
+<div class="leaf level-6 "><span class="node-label">Inspiration for new philosophical inquiries</span></div>
+<div class="leaf level-6 "><span class="node-label">Encouraging interdisciplinary studies</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Extends original map</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-4 "><summary><span class="node-label">Original map queries</span><span class="count">4</span></summary>
+<div class="children">
+<details class="level-5 "><summary><span class="node-label">Thinkers under existential themes</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Key figures</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Prominent philosophers</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Jean-Paul Sartre</span></div>
+<div class="leaf level-6 "><span class="node-label">Simone de Beauvoir</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Influential authors</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Fyodor Dostoevsky</span></div>
+<div class="leaf level-6 "><span class="node-label">Franz Kafka</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Modern theorists</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Albert Camus</span></div>
+<div class="leaf level-6 "><span class="node-label">Viktor Frankl</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Core philosophies</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Existentialism</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Freedom of choice</span></div>
+<div class="leaf level-6 "><span class="node-label">Authenticity</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Absurdism</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Search for meaning</span></div>
+<div class="leaf level-6 "><span class="node-label">Acceptance of chaos</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Nihilism</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Rejection of inherent meaning</span></div>
+<div class="leaf level-6 "><span class="node-label">Consequences on perception</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Influential quotes</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Foundational statements</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">&quot;Existence precedes essence.&quot; – Sartre</span></div>
+<div class="leaf level-6 "><span class="node-label">&quot;The struggle itself towards the heights is enough to fill a man&#x27;s heart.&quot; – Camus</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Key insights</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Meaning through individual experience</span></div>
+<div class="leaf level-6 "><span class="node-label">Embracing absurdity as a response</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Thought-provoking reflections</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">The impact of despair</span></div>
+<div class="leaf level-6 "><span class="node-label">The role of action in creating meaning</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Hypermap queries</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Nihilistic disclosure</span><span class="count">5</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Definitions</span><span class="count">6</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Core Concepts</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Inherent Meaning Absence</span></div>
+<div class="leaf level-6 "><span class="node-label">Existential Void</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Theoretical Frameworks</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Critiques of Existentialism</span></div>
+<div class="leaf level-6 "><span class="node-label">Perspectives on Absurdism</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Historical Perspectives</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Influential Figures</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Friedrich Nietzsche</span></div>
+<div class="leaf level-6 "><span class="node-label">Arthur Schopenhauer</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Key Movements</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Nihilism in Literature</span></div>
+<div class="leaf level-6 "><span class="node-label">Philosophical Anarchism</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Current Implications</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Societal Impacts</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Rise of Skepticism</span></div>
+<div class="leaf level-6 "><span class="node-label">Challenges to Belief Systems</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Contemporary Discourse</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Nihilism in Modern Philosophy</span></div>
+<div class="leaf level-6 "><span class="node-label">Critiques in Cultural Studies</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Cultural Interpretations</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Media Representation</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Literature Examples</span></div>
+<div class="leaf level-6 "><span class="node-label">Film and Art References</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Public Perception</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Misunderstandings of Nihilism</span></div>
+<div class="leaf level-6 "><span class="node-label">Associative Stigma</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Personal Implications</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Existential Reflections</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Individual Search for Meaning</span></div>
+<div class="leaf level-6 "><span class="node-label">Coping with Inherent Uncertainty</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Psychological Effects</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Emotional Responses</span></div>
+<div class="leaf level-6 "><span class="node-label">Strategies for Resilience</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Historical perspectives</span><span class="count">4</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Influential Figures</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Friedrich Nietzsche</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Existential nihilism advocate</span></div>
+<div class="leaf level-6 "><span class="node-label">Concept of the &quot;Übermensch&quot;</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Arthur Schopenhauer</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Pessimistic philosophy</span></div>
+<div class="leaf level-6 "><span class="node-label">Will to live concept</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Key Movements</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Nihilism in Literature</span><span class="count">5</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Key Works</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Prominent Authors</span><span class="count">4</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Albert Camus</span></div>
+<div class="leaf level-6 "><span class="node-label">Fyodor Dostoevsky</span></div>
+<div class="leaf level-6 "><span class="node-label">Jean-Paul Sartre</span></div>
+<div class="leaf level-6 "><span class="node-label">Franz Kafka</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Notable Titles</span><span class="count">4</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">&quot;The Stranger&quot; - Camus</span></div>
+<div class="leaf level-6 "><span class="node-label">&quot;Notes from Underground&quot; - Dostoevsky</span></div>
+<div class="leaf level-6 "><span class="node-label">&quot;Nausea&quot; - Sartre</span></div>
+<div class="leaf level-6 "><span class="node-label">&quot;The Metamorphosis&quot; - Kafka</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Themes</span><span class="count">4</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Existential Despair</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Characters&#x27; struggles</span></div>
+<div class="leaf level-6 "><span class="node-label">Search for meaning</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Absurdity</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Encountering chaos</span></div>
+<div class="leaf level-6 "><span class="node-label">Rejection of traditional values</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Alienation</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Isolation of protagonists</span></div>
+<div class="leaf level-6 "><span class="node-label">Disconnection from society</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Moral Cynicism</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Questioning ethical frameworks</span></div>
+<div class="leaf level-6 "><span class="node-label">Exploration of nihilistic morality</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Literary Techniques</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Symbolism</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Objects representing nihilistic concepts</span></div>
+<div class="leaf level-6 "><span class="node-label">Ambiguity in meanings</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Characterization</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Complex, flawed characters</span></div>
+<div class="leaf level-6 "><span class="node-label">Development through nihilistic experiences</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Narrative Structure</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Non-linear storytelling</span></div>
+<div class="leaf level-6 "><span class="node-label">Unconventional plot resolutions</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Impact</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Influence on Genre</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Shaping modern literature</span></div>
+<div class="leaf level-6 "><span class="node-label">Paving the way for existentialism</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Cultural Reflections</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Representation in modern media</span></div>
+<div class="leaf level-6 "><span class="node-label">Reflection of societal issues</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Reader Responses</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Provoking critical thought</span></div>
+<div class="leaf level-6 "><span class="node-label">Challenging perceptions of meaning</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Critiques</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Misinterpretations</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Misconceptions about nihilism</span></div>
+<div class="leaf level-6 "><span class="node-label">Association with despair</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Contextual Relevance</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Literature as a response to historical events</span></div>
+<div class="leaf level-6 "><span class="node-label">Connection to philosophical discourses</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Evolution of Themes</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Changes over time</span></div>
+<div class="leaf level-6 "><span class="node-label">Adaptation to contemporary issues</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Philosophical Anarchism</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Rejection of conventional authority</span></div>
+<div class="leaf level-6 "><span class="node-label">Emphasis on individual autonomy</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Societal Impact</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Rise of Skepticism</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Challenges to traditional beliefs</span></div>
+<div class="leaf level-6 "><span class="node-label">Doubt in established norms</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Erosion of Communal Values</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Decreased trust in social institutions</span></div>
+<div class="leaf level-6 "><span class="node-label">Shift towards individualism</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Contemporary Discourse</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Nihilism in Modern Philosophy</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Discussions on meaning and existence</span></div>
+<div class="leaf level-6 "><span class="node-label">Critiques from contemporary thinkers</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Cultural Studies Critiques</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Analyzing nihilism&#x27;s portrayal in media</span></div>
+<div class="leaf level-6 "><span class="node-label">Impact on cultural narratives</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Current implications</span><span class="count">6</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Societal Impacts</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Growing skepticism</span></div>
+<div class="leaf level-6 "><span class="node-label">Challenges to belief systems</span></div>
+<div class="leaf level-6 "><span class="node-label">Decreased communal values</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Contemporary Discourse</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Nihilism in modern philosophy</span></div>
+<div class="leaf level-6 "><span class="node-label">Cultural studies critiques</span></div>
+<div class="leaf level-6 "><span class="node-label">Evolution of public perception</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Personal Implications</span><span class="count">4</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Existential reflections</span></div>
+<div class="leaf level-6 "><span class="node-label">Coping with uncertainty</span></div>
+<div class="leaf level-6 "><span class="node-label">Psychological effects</span></div>
+<div class="leaf level-6 "><span class="node-label">Strategies for resilience</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Ethical Considerations</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Moral dilemmas</span></div>
+<div class="leaf level-6 "><span class="node-label">Challenges to traditional ethics</span></div>
+<div class="leaf level-6 "><span class="node-label">Debates on nihilism&#x27;s validity</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Psychological Impacts</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Mental health concerns</span></div>
+<div class="leaf level-6 "><span class="node-label">Emotional responses</span></div>
+<div class="leaf level-6 "><span class="node-label">Coping mechanisms</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Educational Integration</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Curriculum development</span></div>
+<div class="leaf level-6 "><span class="node-label">Discussions in classrooms</span></div>
+<div class="leaf level-6 "><span class="node-label">Exploration of nihilistic themes</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Cultural interpretations</span><span class="count">4</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Media Representation</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Literature Examples</span><span class="count">1</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Key Works</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">&quot;Nausea&quot; - Sartre</span></div>
+<div class="leaf level-6 "><span class="node-label">&quot;The Metamorphosis&quot; - Kafka</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Film and Art References</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Notable Films</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">&quot;Fight Club&quot;</span></div>
+<div class="leaf level-6 "><span class="node-label">&quot;The Truman Show&quot;</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Artistic Movements</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Absurdist Theatre</span></div>
+<div class="leaf level-6 "><span class="node-label">Dadaism</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Public Perception</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Misunderstandings of Nihilism</span><span class="count">1</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Common Myths</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Nihilism as despair</span></div>
+<div class="leaf level-6 "><span class="node-label">Misconception as anti-social</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Associative Stigma</span><span class="count">1</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Societal Reactions</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Fear of nihilistic views</span></div>
+<div class="leaf level-6 "><span class="node-label">Marginalization of nihilist thinkers</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Impact on Society</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Cultural Narratives</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Influence on Modern Art</span></div>
+<div class="leaf level-6 "><span class="node-label">Reflections in Popular Culture</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Responses to Nihilism</span><span class="count">1</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Counter Movements</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Existentialism resurgence</span></div>
+<div class="leaf level-6 "><span class="node-label">Hopeful philosophies</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Personal Reflections</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Existential Search for Meaning</span><span class="count">1</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Individual Experiences</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Stories of finding purpose</span></div>
+<div class="leaf level-6 "><span class="node-label">Coping with void</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Coping with Inherent Uncertainty</span><span class="count">1</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Strategies Adopted</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Community support</span></div>
+<div class="leaf level-6 "><span class="node-label">Philosophical inquiry</span></div>
+</div></details>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Personal implications</span><span class="count">8</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Existential reflections</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Individual search for meaning</span></div>
+<div class="leaf level-6 "><span class="node-label">Coping with inherent uncertainty</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Psychological effects</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Emotional responses</span></div>
+<div class="leaf level-6 "><span class="node-label">Strategies for resilience</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Impact on relationships</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Shift in social dynamics</span></div>
+<div class="leaf level-6 "><span class="node-label">Influence on interpersonal connections</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Philosophical insights</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Integration of nihilistic themes</span></div>
+<div class="leaf level-6 "><span class="node-label">Exploration of identity and purpose</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Coping mechanisms</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Practices for mindfulness</span></div>
+<div class="leaf level-6 "><span class="node-label">Seeking community support</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Narrative transformations</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Personal storytelling</span></div>
+<div class="leaf level-6 "><span class="node-label">Redefining life experiences</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Learning and growth</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Lessons from nihilistic viewpoints</span></div>
+<div class="leaf level-6 "><span class="node-label">Encouragement of critical thinking</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Influence on creativity</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Embracing absurdity in art</span></div>
+<div class="leaf level-6 "><span class="node-label">Innovation through exploration</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Distribution</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Channels of dissemination</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Academic forums</span></div>
+<div class="leaf level-6 "><span class="node-label">Digital media presence</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Audience engagement</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Interactive discussions</span></div>
+<div class="leaf level-6 "><span class="node-label">Diverse formats</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Cross-disciplinary links</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Sociology connections</span></div>
+<div class="leaf level-6 "><span class="node-label">Psychology intersections</span></div>
+<div class="leaf level-6 "><span class="node-label">Art and literature relations</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Philosophical hazard</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Risks of nihilism</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Individual consequences</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Existential crises</span></div>
+<div class="leaf level-6 "><span class="node-label">Loss of motivation</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Societal effects</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Increased apathy</span></div>
+<div class="leaf level-6 "><span class="node-label">Erosion of communal values</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Ethical considerations</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Moral implications</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Challenges to traditional ethics</span></div>
+<div class="leaf level-6 "><span class="node-label">Dilemmas in decision-making</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Philosophical debates</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Arguments for/against nihilism</span></div>
+<div class="leaf level-6 "><span class="node-label">Impact on ethical theories</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Psychological impacts</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Emotional health</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Anxiety and depression</span></div>
+<div class="leaf level-6 "><span class="node-label">Sense of isolation</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Coping strategies</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Resilience building</span></div>
+<div class="leaf level-6 "><span class="node-label">Finding meaning in chaos</span></div>
+</div></details>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Distribution</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Channels of dissemination</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Academic publications</span></div>
+<div class="leaf level-6 "><span class="node-label">Online platforms</span></div>
+<div class="leaf level-6 "><span class="node-label">Social media outreach</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Audience engagement</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Target demographics</span></div>
+<div class="leaf level-6 "><span class="node-label">Interactive formats</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Cross-disciplinary links</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Connections to sociology</span></div>
+<div class="leaf level-6 "><span class="node-label">Intersections with psychology</span></div>
+<div class="leaf level-6 "><span class="node-label">Relationship to art and literature</span></div>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Philosophical hazard</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Risks of nihilism</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Individual consequences</span></div>
+<div class="leaf level-6 "><span class="node-label">Societal effects</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Ethical considerations</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Moral implications</span></div>
+<div class="leaf level-6 "><span class="node-label">Philosophical debates</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Psychological impacts</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Mental health concerns</span></div>
+<div class="leaf level-6 "><span class="node-label">Coping mechanisms</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Hypermap queries</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-5 "><summary><span class="node-label">Nihilistic disclosure</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Definitions</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Core concepts</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Absence of inherent meaning</span></div>
+<div class="leaf level-6 "><span class="node-label">Existential void</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Theoretical frameworks</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Existentialism&#x27;s critique</span></div>
+<div class="leaf level-6 "><span class="node-label">Absurdism&#x27;s perspectives</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Historical perspectives</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Influential figures</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Friedrich Nietzsche</span></div>
+<div class="leaf level-6 "><span class="node-label">Arthur Schopenhauer</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Key movements</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Nihilism in literature</span></div>
+<div class="leaf level-6 "><span class="node-label">Philosophical anarchism</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Current implications</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Societal impacts</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Rise of skepticism</span></div>
+<div class="leaf level-6 "><span class="node-label">Challenges to belief systems</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Contemporary discourse</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Nihilism in modern philosophy</span></div>
+<div class="leaf level-6 "><span class="node-label">Critiques in cultural studies</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Distribution</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Channels of dissemination</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Academic forums</span></div>
+<div class="leaf level-6 "><span class="node-label">Digital media presence</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Audience engagement</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Interactive discussions</span></div>
+<div class="leaf level-6 "><span class="node-label">Diverse formats</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Cross-disciplinary links</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Sociology connections</span></div>
+<div class="leaf level-6 "><span class="node-label">Psychology intersections</span></div>
+<div class="leaf level-6 "><span class="node-label">Art and literature relations</span></div>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Philosophical hazard</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Risks of nihilism</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Individual consequences</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Existential crises</span></div>
+<div class="leaf level-6 "><span class="node-label">Loss of motivation</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Societal effects</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Increased apathy</span></div>
+<div class="leaf level-6 "><span class="node-label">Erosion of communal values</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Ethical considerations</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Moral implications</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Challenges to traditional ethics</span></div>
+<div class="leaf level-6 "><span class="node-label">Dilemmas in decision-making</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Philosophical debates</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Arguments for and against nihilism</span></div>
+<div class="leaf level-6 "><span class="node-label">Impact on ethical theories</span></div>
+</div></details>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Psychological impacts</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Emotional health</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Anxiety and depression</span></div>
+<div class="leaf level-6 "><span class="node-label">Sense of isolation</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Coping strategies</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Resilience building</span></div>
+<div class="leaf level-6 "><span class="node-label">Finding meaning in chaos</span></div>
+</div></details>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Result</span><span class="count">4</span></summary>
+<div class="children">
+<details class="level-5 "><summary><span class="node-label">Enhanced visual representation</span><span class="count">6</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Interactive elements</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Dynamic content</span></div>
+<div class="leaf level-6 "><span class="node-label">Engaging interfaces</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">User navigation</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Intuitive layout</span></div>
+<div class="leaf level-6 "><span class="node-label">Streamlined paths</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Data integration</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Cross-referenced sources</span></div>
+<div class="leaf level-6 "><span class="node-label">Real-time updates</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Visual aids</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Infographics</span></div>
+<div class="leaf level-6 "><span class="node-label">Diagrams and charts</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Accessibility features</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Alternative formats</span></div>
+<div class="leaf level-6 "><span class="node-label">Multi-device compatibility</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">User feedback</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Input mechanisms</span></div>
+<div class="leaf level-6 "><span class="node-label">Iterative design process</span></div>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Broader thematic mapping</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Connections to other ideologies</span></div>
+<div class="leaf level-6 "><span class="node-label">Evolution over time</span></div>
+<div class="leaf level-6 "><span class="node-label">Cultural relevance</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Impact on comprehension</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Clarity of concepts</span></div>
+<div class="leaf level-6 "><span class="node-label">Encouragement of critical thinking</span></div>
+<div class="leaf level-6 "><span class="node-label">Facilitation of discourse</span></div>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Engagement strategies</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">User participation</span></div>
+<div class="leaf level-6 "><span class="node-label">Diverse formats for presentation</span></div>
+<div class="leaf level-6 "><span class="node-label">Feedback mechanisms</span></div>
+</div></details>
+</div></details>
+</div></details>
+</div></details>
+</div></details>
+</div></details>
+<details open class="level-0 root-node"><summary><span class="node-label">Thematic Cross-Cuts</span><span class="count">4</span></summary>
+<div class="children">
+<details open class="level-1 "><summary><span class="node-label">T1 Groundlessness</span><span class="count">5</span></summary>
+<div class="children">
+<details class="level-2 "><summary><span class="node-label">Philosophy</span><span class="count">1</span></summary>
+<div class="children">
+<details class="level-3 "><summary><span class="node-label">Key Concepts</span><span class="count">5</span></summary>
+<div class="children">
+<details class="level-4 "><summary><span class="node-label">Epistemology</span><span class="count">5</span></summary>
+<div class="children">
+<details class="level-5 "><summary><span class="node-label">Key Questions</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Nature of Knowledge</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">What is knowledge?</span></div>
+<div class="leaf level-6 "><span class="node-label">Distinction between belief and knowledge</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Sources of Knowledge</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Experience and observation</span></div>
+<div class="leaf level-6 "><span class="node-label">Reason and intuition</span></div>
+<div class="leaf level-6 "><span class="node-label">Knowledge as socially constructed</span></div>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Justification of Knowledge</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Basic, self-evident beliefs as groundwork</span></div>
+<div class="leaf level-6 "><span class="node-label">What constitutes a basic belief?</span></div>
+<div class="leaf level-6 "><span class="node-label">Issues of circular reasoning</span></div>
+<div class="leaf level-6 "><span class="node-label">Interconnected beliefs for support</span></div>
+<div class="leaf level-6 "><span class="node-label">What defines coherence?</span></div>
+<div class="leaf level-6 "><span class="node-label">Limitations of circularity</span></div>
+<div class="leaf level-6 "><span class="node-label">Reliable methods yield true beliefs</span></div>
+<div class="leaf level-6 "><span class="node-label">Determining reliable processes</span></div>
+<div class="leaf level-6 "><span class="node-label">Balancing truth and belief</span></div>
+<div class="leaf level-6 "><span class="node-label">Justification varies with context</span></div>
+<div class="leaf level-6 "><span class="node-label">Impact of social and cultural factors</span></div>
+<div class="leaf level-6 "><span class="node-label">Relativity of standards</span></div>
+<div class="leaf level-6 "><span class="node-label">Knowledge formed through social interactions</span></div>
+<div class="leaf level-6 "><span class="node-label">Subjectivity in belief formation</span></div>
+<div class="leaf level-6 "><span class="node-label">The role of consensus</span></div>
+<div class="leaf level-6 "><span class="node-label">Importance of intellectual virtues</span></div>
+<div class="leaf level-6 "><span class="node-label">Defining virtues in knowledge contexts</span></div>
+<div class="leaf level-6 "><span class="node-label">Relevance of character to truth</span></div>
+<div class="leaf level-6 "><span class="node-label">Justification based on usefulness</span></div>
+<div class="leaf level-6 "><span class="node-label">Practical vs. epistemic value</span></div>
+<div class="leaf level-6 "><span class="node-label">Relationship between truth and utility</span></div>
+<div class="leaf level-6 "><span class="node-label">Questions the possibility of certainty</span></div>
+<div class="leaf level-6 "><span class="node-label">Addressing the limits of knowledge claims</span></div>
+<div class="leaf level-6 "><span class="node-label">Reconciliation with common beliefs</span></div>
+</div></details>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Metaphysics</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-5 "><summary><span class="node-label">Key Philosophers</span><span class="count">4</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Aristotelian Metaphysics</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Substance and Essence</span></div>
+<div class="leaf level-6 "><span class="node-label">Four Causes</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Leibniz</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Monadology</span></div>
+<div class="leaf level-6 "><span class="node-label">Principle of Sufficient Reason</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Kant</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Transcendental Idealism</span></div>
+<div class="leaf level-6 "><span class="node-label">Noumenon vs. Phenomenon</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Heidegger</span><span class="count">4</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Key Ideas</span><span class="count">5</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Being</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">What does it mean to be?</span></div>
+<div class="leaf level-6 "><span class="node-label">Nature of existence</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Time</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Past, present, future interrelation</span></div>
+<div class="leaf level-6 "><span class="node-label">Influence of history on Being</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Language</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Connection between language and understanding</span></div>
+<div class="leaf level-6 "><span class="node-label">Language as a pathway to Being</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Technology</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Technology's impact on perception of nature</span></div>
+<div class="leaf level-6 "><span class="node-label">Critique of modern technological mindset</span></div>
+</div></details>
+<details class="level-6 "><summary><span class="node-label">Authenticity</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Being-in-the-world as caring</span></div>
+<div class="leaf level-6 "><span class="node-label">Encountering nothingness in existence</span></div>
+</div></details>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-5 "><summary><span class="node-label">Major Themes</span><span class="count">5</span></summary>
+<div class="children">
+<details class="level-6 "><summary><span class="node-label">Groundlessness</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Personal perspective</span></div>
+<div class="leaf level-6 "><span class="node-label">Experience shapes understanding</span></div>
+<div class="leaf level-6 "><span class="node-label">Fluidity of truth</span></div>
+<div class="leaf level-6 "><span class="node-label">Existential doubt</span></div>
+<div class="leaf level-6 "><span class="node-label">Interconnected identity</span></div>
+<div class="leaf level-6 "><span class="node-label">Impact of relationships on self</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Ethics</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Moral Philosophy</span></div>
+<div class="leaf level-5 "><span class="node-label">Virtue Ethics</span></div>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Political Philosophy</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Justice and Rights</span></div>
+<div class="leaf level-5 "><span class="node-label">Social Contract Theory</span></div>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Aesthetics</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Nature of Beauty</span></div>
+<div class="leaf level-5 "><span class="node-label">Art and Interpretation</span></div>
+</div></details>
+</div></details>
+<details class="level-2 "><summary><span class="node-label">Psychology</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-3 "><summary><span class="node-label">Existential Anxiety</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-4 "><span class="node-label">Fear of meaninglessness</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Identity Crisis</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-4 "><span class="node-label">Questioning self and purpose</span></div>
+</div></details>
+</div></details>
+<details class="level-2 "><summary><span class="node-label">Literature</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-3 "><summary><span class="node-label">Modernism</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-4 "><span class="node-label">Fragmentation of narrative</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Postmodernism</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-4 "><span class="node-label">Challenge of grand narratives</span></div>
+</div></details>
+</div></details>
+<details class="level-2 "><summary><span class="node-label">Art</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-3 "><summary><span class="node-label">Abstract Expressionism</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-4 "><span class="node-label">Reflection of chaotic emotions</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Surrealism</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-4 "><span class="node-label">Exploration of unconscious mind</span></div>
+</div></details>
+</div></details>
+<details class="level-2 "><summary><span class="node-label">Spirituality</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-3 "><summary><span class="node-label">Zen Buddhism</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-4 "><span class="node-label">Emphasis on emptiness</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Taoism</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-4 "><span class="node-label">Flow with the path of life</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details open class="level-1 "><summary><span class="node-label">T2 Death / Mortality</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-2 "><summary><span class="node-label">Phenomenological</span><span class="count">4</span></summary>
+<div class="children">
+<details class="level-3 "><summary><span class="node-label">Key Theorists</span><span class="count">2</span></summary>
+<div class="children">
+<details class="level-4 "><summary><span class="node-label">Edmund Husserl</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Consciousness directed towards objects</span></div>
+<div class="leaf level-6 "><span class="node-label">Suspension of judgment</span></div>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Maurice Merleau-Ponty</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Perception through the body</span></div>
+<div class="leaf level-6 "><span class="node-label">Shared experience</span></div>
+</div></details>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Core Concepts</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Subjective reality</span></div>
+<div class="leaf level-5 "><span class="node-label">First-person perspective</span></div>
+<div class="leaf level-6 "><span class="node-label">Past, present, future dimensions</span></div>
+<div class="leaf level-6 "><span class="node-label">Memory and anticipation</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Methodological Approaches</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Detailed exploration of experiences</span></div>
+<div class="leaf level-5 "><span class="node-label">Bracketing biases and assumptions</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Applications</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Understanding human experience</span></div>
+<div class="leaf level-5 "><span class="node-label">Analyzing artistic expression through perception</span></div>
+<div class="leaf level-5 "><span class="node-label">Moral implications of lived experiences</span></div>
+</div></details>
+</div></details>
+<details class="level-2 "><summary><span class="node-label">Christian</span><span class="count">6</span></summary>
+<div class="children">
+<details class="level-3 "><summary><span class="node-label">Theological Concepts</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Unmerited favor</span></div>
+<div class="leaf level-5 "><span class="node-label">Role in salvation</span></div>
+<div class="leaf level-5 "><span class="node-label">Restoration of relationship with God</span></div>
+<div class="leaf level-5 "><span class="node-label">Faith and works</span></div>
+<div class="leaf level-5 "><span class="node-label">Assurance of salvation</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Biblical Perspectives</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Sermon on the Mount</span></div>
+<div class="leaf level-6 "><span class="node-label">Parables</span></div>
+<div class="leaf level-6 "><span class="node-label">Justification by faith</span></div>
+<div class="leaf level-6 "><span class="node-label">Role of love</span></div>
+<div class="leaf level-6 "><span class="node-label">Abrahamic covenant</span></div>
+<div class="leaf level-6 "><span class="node-label">Mosaic law</span></div>
+<div class="leaf level-6 "><span class="node-label">Predictions of Jesus</span></div>
+<div class="leaf level-6 "><span class="node-label">Fulfillment in the New Testament</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Historical Context</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Writings and practices</span></div>
+<div class="leaf level-6 "><span class="node-label">Persecution</span></div>
+<div class="leaf level-6 "><span class="node-label">Legalization and expansion</span></div>
+<div class="leaf level-6 "><span class="node-label">95 Theses</span></div>
+<div class="leaf level-6 "><span class="node-label">Sola Scriptura</span></div>
+<div class="leaf level-6 "><span class="node-label">Predestination</span></div>
+<div class="leaf level-6 "><span class="node-label">Influence on Protestantism</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Spiritual Practices</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Intercessory</span></div>
+<div class="leaf level-6 "><span class="node-label">Contemplative</span></div>
+<div class="leaf level-5 "><span class="node-label">Role in personal growth</span></div>
+<div class="leaf level-6 "><span class="node-label">Symbolism of new life</span></div>
+<div class="leaf level-6 "><span class="node-label">Sign of faith</span></div>
+<div class="leaf level-6 "><span class="node-label">Communion significance</span></div>
+<div class="leaf level-6 "><span class="node-label">Symbol of Christ’s sacrifice</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Ethical Teachings</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Love your neighbor</span></div>
+<div class="leaf level-5 "><span class="node-label">Social justice</span></div>
+<div class="leaf level-5 "><span class="node-label">Importance of forgiveness</span></div>
+<div class="leaf level-5 "><span class="node-label">Implications for relationships</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Mystical Traditions</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Asceticism</span></div>
+<div class="leaf level-5 "><span class="node-label">Spiritual journeys</span></div>
+<div class="leaf level-5 "><span class="node-label">Connection with God</span></div>
+<div class="leaf level-5 "><span class="node-label">Silence and stillness</span></div>
+</div></details>
+</div></details>
+<details class="level-2 "><summary><span class="node-label">Existentialist / Pessimist</span><span class="count">5</span></summary>
+<div class="children">
+<details class="level-3 "><summary><span class="node-label">Key Philosophers</span><span class="count">7</span></summary>
+<div class="children">
+<details class="level-4 "><summary><span class="node-label">Nietzsche</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Will to Power</span></div>
+<div class="leaf level-5 "><span class="node-label">Eternal Recurrence</span></div>
+<div class="leaf level-5 "><span class="node-label">Critique of Morality</span></div>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Sartre</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Existence Precedes Essence</span></div>
+<div class="leaf level-5 "><span class="node-label">Freedom and Responsibility</span></div>
+<div class="leaf level-5 "><span class="node-label">Bad Faith</span></div>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Cioran</span><span class="count">6</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Romanian heritage</span></div>
+<div class="leaf level-6 "><span class="node-label">Education in philosophy</span></div>
+<div class="leaf level-6 "><span class="node-label">Move to France</span></div>
+<div class="leaf level-6 "><span class="node-label">Influence of French culture</span></div>
+<div class="leaf level-6 "><span class="node-label">Themes of existential anguish</span></div>
+<div class="leaf level-6 "><span class="node-label">Reflections on despair and suffering</span></div>
+<div class="leaf level-6 "><span class="node-label">Critique of modern civilization</span></div>
+<div class="leaf level-6 "><span class="node-label">Exploration of nihilism</span></div>
+<div class="leaf level-6 "><span class="node-label">Examination of existence</span></div>
+<div class="leaf level-6 "><span class="node-label">Rejection of life as inherent value</span></div>
+<div class="leaf level-6 "><span class="node-label">Nature of existence</span></div>
+<div class="leaf level-6 "><span class="node-label">Absurdity and meaninglessness</span></div>
+<div class="leaf level-6 "><span class="node-label">Rejection of traditional values</span></div>
+<div class="leaf level-6 "><span class="node-label">Emphasis on futility of life's pursuits</span></div>
+<div class="leaf level-6 "><span class="node-label">View of life as suffering</span></div>
+<div class="leaf level-6 "><span class="node-label">Acceptance of sorrow as part of existence</span></div>
+<div class="leaf level-6 "><span class="node-label">Contemplation on mortality</span></div>
+<div class="leaf level-6 "><span class="node-label">Acceptance of death’s inevitability</span></div>
+<div class="leaf level-6 "><span class="node-label">Importance of solitude for self-reflection</span></div>
+<div class="leaf level-6 "><span class="node-label">Isolation as a catalyst for thought</span></div>
+<div class="leaf level-6 "><span class="node-label">Relativity and perception of time</span></div>
+<div class="leaf level-6 "><span class="node-label">Diminishing significance of past and future</span></div>
+</div></details>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Major Concepts</span><span class="count">5</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Personal perspective and experience</span></div>
+<div class="leaf level-6 "><span class="node-label">Fading certainties in life</span></div>
+<div class="leaf level-6 "><span class="node-label">Interconnectedness of being</span></div>
+<div class="leaf level-6 "><span class="node-label">Acceptance</span></div>
+<div class="leaf level-6 "><span class="node-label">Legacy</span></div>
+<div class="leaf level-6 "><span class="node-label">Transience</span></div>
+<div class="leaf level-6 "><span class="node-label">Absurdism</span></div>
+<div class="leaf level-6 "><span class="node-label">Nihilism</span></div>
+<div class="leaf level-6 "><span class="node-label">Existential Anxiety</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details open class="level-1 "><summary><span class="node-label">T6 Darkness / Unknowing</span><span class="count">1</span></summary>
+<div class="children">
+<details class="level-2 "><summary><span class="node-label">Christian Apophatic</span><span class="count">4</span></summary>
+<div class="children">
+<details class="level-3 "><summary><span class="node-label">Key Figures</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-4 "><summary><span class="node-label">Pseudo-Dionysius</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">God beyond comprehension</span></div>
+<div class="leaf level-6 "><span class="node-label">Mystical language</span></div>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">John of the Cross</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Spiritual journey</span></div>
+<div class="leaf level-6 "><span class="node-label">Purification process</span></div>
+</div></details>
+<details class="level-4 "><summary><span class="node-label">Nicholas of Cusa</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-6 "><span class="node-label">Learned ignorance</span></div>
+<div class="leaf level-6 "><span class="node-label">Paradox of knowledge</span></div>
+</div></details>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Core Concepts</span><span class="count">3</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Negation of attributes</span></div>
+<div class="leaf level-5 "><span class="node-label">Emphasis on ineffability</span></div>
+<div class="leaf level-5 "><span class="node-label">Direct encounter with God</span></div>
+<div class="leaf level-5 "><span class="node-label">Silence as a spiritual path</span></div>
+<div class="leaf level-5 "><span class="node-label">Limitations of human understanding</span></div>
+<div class="leaf level-5 "><span class="node-label">Faith beyond reason</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Practices</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Silence and stillness</span></div>
+<div class="leaf level-5 "><span class="node-label">Focus on awareness</span></div>
+<div class="leaf level-5 "><span class="node-label">Self-denial for spiritual growth</span></div>
+<div class="leaf level-5 "><span class="node-label">Emphasis on inner transformation</span></div>
+</div></details>
+<details class="level-3 "><summary><span class="node-label">Comparisons</span><span class="count">2</span></summary>
+<div class="children">
+<div class="leaf level-5 "><span class="node-label">Affirmative vs. negative theology</span></div>
+<div class="leaf level-5 "><span class="node-label">Different approaches to God</span></div>
+<div class="leaf level-5 "><span class="node-label">Influence on mystics</span></div>
+<div class="leaf level-5 "><span class="node-label">Relevance in modern spirituality</span></div>
+</div></details>
+</div></details>
+</div></details>
+<details open class="level-1 "><summary><span class="node-label">T13 Language / Silence</span><span class="count">3</span></summary>
+<div class="children">
+<details class="level-2 "><summary><span class="node-label">Analytic</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-3 "><span class="node-label">Wittgenstein — limits of language</span></div>
+</div></details>
+<details class="level-2 "><summary><span class="node-label">Buddhist</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-3 "><span class="node-label">Zen kōans — silence beyond words</span></div>
+</div></details>
+<details class="level-2 "><summary><span class="node-label">Postmodern</span><span class="count">1</span></summary>
+<div class="children">
+<div class="leaf level-3 "><span class="node-label">Derrida — the undecidable</span></div>
+</div></details>
+</div></details>
+</div></details>
+  </section>
+  <p class="footer-note">Tip: Use search to open matching branches automatically. The Markdown download keeps the same hierarchy for Xmind import.</p>
+</main>
+<script>
+function setAll(open) {
+  document.querySelectorAll('details').forEach(d => d.open = open);
+}
+function searchMap(q) {
+  q = q.trim().toLowerCase();
+  document.querySelectorAll('.match').forEach(el => el.classList.remove('match'));
+  document.querySelectorAll('.hidden-by-search').forEach(el => el.classList.remove('hidden-by-search'));
+  if (!q) return;
+  const labels = Array.from(document.querySelectorAll('.node-label'));
+  const matches = [];
+  labels.forEach(label => {
+    if (label.textContent.toLowerCase().includes(q)) {
+      const holder = label.closest('details, .leaf');
+      if (holder) {
+        holder.classList.add('match');
+        matches.push(holder);
+        let p = holder.parentElement;
+        while (p) {
+          if (p.tagName && p.tagName.toLowerCase() === 'details') p.open = true;
+          p = p.parentElement;
+        }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>

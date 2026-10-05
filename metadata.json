@@ -1,0 +1,6 @@
+{
+  "name": "Nihiltheism REN Knowledge Graph",
+  "description": "Interactive Nihiltheistic Hypermap & Knowledge Graph with Multi-Format File Ingestion, Graph Visualizer, and Analysis System",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
