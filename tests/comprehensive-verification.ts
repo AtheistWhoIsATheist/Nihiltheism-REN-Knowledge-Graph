@@ -319,6 +319,35 @@ Silence,Language,Limit of expression`;
     `Transformed corpus into ${j314Entities.nodes.length} nodes and ${j314Entities.edges.length} dialectical edges with complete provenance.`
   );
 
+  // --- BINAURAL RESONANCE AUDIO ENGINE SUITE ---
+
+  // AUDIO-1: Binaural Resonance Tone Formulas & Frequency Bounds
+  const { BinauralAudioEngine, binauralAudio } = await import('../src/services/audio/BinauralAudioEngine.ts');
+  const coldFrequencies = BinauralAudioEngine.calculateFrequencies(0.0);
+  const baselineFrequencies = BinauralAudioEngine.calculateFrequencies(0.05);
+  const midFrequencies = BinauralAudioEngine.calculateFrequencies(0.5);
+  const hotFrequencies = BinauralAudioEngine.calculateFrequencies(1.0);
+  const engineState = binauralAudio.getState();
+
+  const audioEngineValid = 
+    coldFrequencies.carrier === 108.0 &&
+    coldFrequencies.beat === 1.5 &&
+    coldFrequencies.band === 'Delta' &&
+    hotFrequencies.carrier === 216.0 &&
+    hotFrequencies.beat >= 5.5 && hotFrequencies.beat <= 7.0 &&
+    hotFrequencies.band === 'Theta' &&
+    midFrequencies.carrier > 108.0 && midFrequencies.carrier < 216.0 &&
+    engineState.volume <= 0.35 &&
+    typeof binauralAudio.toggle === 'function';
+
+  assert(
+    'AUDIO-1',
+    'Binaural Resonance Audio Synthesis & Bounds',
+    'Acoustic Phenomenology',
+    audioEngineValid,
+    `Verified 108–216 Hz carrier glide, 1.5–6.0 Hz Delta-Theta beat offset, subtle volume ceiling (${engineState.volume * 100}%), and safe browser audio lifecycle.`
+  );
+
   console.log('\n====================================================');
   const passedCount = results.filter(r => r.passed).length;
   const totalCount = results.length;

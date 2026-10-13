@@ -1,0 +1,6 @@
+{
+  "summary": "Implementation plan for integrating a browser-based binaural resonance audio engine into the Nihiltheism Knowledge Graph canvas. The engine generates subtle stereo carrier tones (108–216 Hz) with Delta-Theta binaural beat offsets (1.5–7.0 Hz) driven by the active thermal heat levels of selected hot-spot nodes, complete with canvas HUD controls and volume modulation.",
+  "updatedAt": "2026-10-13T19:36:10.921454647Z",
+  "requestFeedback": true,
+  "userFacing": true
+}
