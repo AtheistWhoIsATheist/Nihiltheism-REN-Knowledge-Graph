@@ -2,8 +2,20 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import * as d3 from 'd3-force';
 import { GraphNode, GraphEdge } from '../types/graph';
-import { JOURNAL_FIGURES, JOURNAL_PHASES } from '../data/journal314DensificationData';
-import { binauralAudio, BinauralAudioState } from '../services/audio/BinauralAudioEngine';
+import {
+  PhysicsOpticsPanel,
+  PhysicsConfig,
+  OpticsConfig,
+  DEFAULT_PHYSICS_CONFIG,
+  DEFAULT_OPTICS_CONFIG
+} from './PhysicsOpticsPanel';
+import {
+  graphIndex,
+  getNodeBaseColor,
+  getThermalColor,
+  SubgraphDensityMode,
+  DialecticalPathResult
+} from '../services/storage/GraphIndex';
 
 interface GraphCanvasProps {
   nodes: GraphNode[];
@@ -12,6 +24,8 @@ interface GraphCanvasProps {
   selectedCategory: string;
   onSelectNode: (node: GraphNode) => void;
   selectedNodeId: string | null;
+  densityMode?: SubgraphDensityMode;
+  highlightedPath?: DialecticalPathResult | null;
 }
 
 export interface SimNode extends d3.SimulationNodeDatum, GraphNode {
@@ -44,204 +58,35 @@ export interface SimLink extends d3.SimulationLinkDatum<SimNode> {
 
 export type OntologicalPhaseKey = 'ALL' | 'PHASE_I' | 'PHASE_II' | 'PHASE_III' | 'PHASE_IV' | 'PHASE_V';
 
-interface ThematicStepDescriptor {
-  step: string;
-  phaseKey: OntologicalPhaseKey;
-  phaseName: string;
-  title: string;
-  keywords: string[];
-}
-
-export const THEMATIC_STEPS_CATALOG: ThematicStepDescriptor[] = [
-  // Phase I: Diagnosis (S1 - S3)
-  {
-    step: 'S1',
-    phaseKey: 'PHASE_I',
-    phaseName: 'Phase I: Diagnosis',
-    title: 'Axiological Collapse & Meaninglessness',
-    keywords: ['vanity', 'absurd', 'meaningless', 'purpose', 'suicide', 'collapse', 'futile', 'worthless', 'doom']
-  },
-  {
-    step: 'S2',
-    phaseKey: 'PHASE_I',
-    phaseName: 'Phase I: Diagnosis',
-    title: 'Anxiety, Boredom & The Void',
-    keywords: ['anxiety', 'dread', 'angst', 'boredom', 'void', 'abyss', 'nothing', 'nichts', 'horror', 'question']
-  },
-  {
-    step: 'S3',
-    phaseKey: 'PHASE_I',
-    phaseName: 'Phase I: Diagnosis',
-    title: 'Suspension of Epistemic Certainty',
-    keywords: ['epistemic', 'doubt', 'skepticism', 'knowledge', 'ignorance', 'straw', 'unexamined', 'representation']
-  },
-
-  // Phase II: Anthropology (S4 - S6)
-  {
-    step: 'S4',
-    phaseKey: 'PHASE_II',
-    phaseName: 'Phase II: Anthropology',
-    title: 'The Split Animal (Mortality vs Infinity)',
-    keywords: ['mortality', 'split', 'death', 'finite', 'eternity', 'flesh', 'reed', 'creature', 'rot']
-  },
-  {
-    step: 'S5',
-    phaseKey: 'PHASE_II',
-    phaseName: 'Phase II: Anthropology',
-    title: 'Call to Renunciation & Contemplation',
-    keywords: ['renunciation', 'contemplation', 'desire', 'monastic', 'retreat', 'detach', 'wisdom']
-  },
-  {
-    step: 'S6',
-    phaseKey: 'PHASE_II',
-    phaseName: 'Phase II: Anthropology',
-    title: 'Contemplative Friction & Doubt',
-    keywords: ['friction', 'dark night', 'difficulty', 'struggle', 'perishing', 'agony', 'dead faith']
-  },
-
-  // Phase III: Purgation (S7 - S10)
-  {
-    step: 'S7',
-    phaseKey: 'PHASE_III',
-    phaseName: 'Phase III: Purgation',
-    title: 'Inward Recollection',
-    keywords: ['recollection', 'interior', 'inward', 'chamber', 'soul', 'center', 'solitude']
-  },
-  {
-    step: 'S8',
-    phaseKey: 'PHASE_III',
-    phaseName: 'Phase III: Purgation',
-    title: 'Sensory Mortification',
-    keywords: ['sensory', 'pleasure', 'mortification', 'fasting', 'ascetic', 'weary', 'appetite']
-  },
-  {
-    step: 'S9',
-    phaseKey: 'PHASE_III',
-    phaseName: 'Phase III: Purgation',
-    title: 'Clearing Distraction & Psychological Suppression',
-    keywords: ['distraction', 'suppression', 'anchoring', 'isolation', 'sublimation', 'subtraction', 'quiet', 'chamber']
-  },
-  {
-    step: 'S10',
-    phaseKey: 'PHASE_III',
-    phaseName: 'Phase III: Purgation',
-    title: 'Altered & Mystical Consciousness',
-    keywords: ['reducing valve', 'psychedelic', 'consciousness', 'mind at large', 'screen', 'doors', 'perception']
-  },
-
-  // Phase IV: Disclosure (S11 - S15)
-  {
-    step: 'S11',
-    phaseKey: 'PHASE_IV',
-    phaseName: 'Phase IV: Disclosure',
-    title: 'The Infinite Within',
-    keywords: ['infinite within', 'spark', 'diamond', 'castle', 'ground', 'kingdom', 'interior infinity']
-  },
-  {
-    step: 'S12',
-    phaseKey: 'PHASE_IV',
-    phaseName: 'Phase IV: Disclosure',
-    title: 'Philosophical Despair as Catalyst',
-    keywords: ['question to myself', 'despair', 'lucid', 'unyielding', 'heights', 'experiment', 'sorrow']
-  },
-  {
-    step: 'S13',
-    phaseKey: 'PHASE_IV',
-    phaseName: 'Phase IV: Disclosure',
-    title: 'Infinite Terror & Beauty (Divine Darkness)',
-    keywords: ['terror', 'divine darkness', 'dreadful', 'unapproachable', 'sea', 'abyss', 'punishment']
-  },
-  {
-    step: 'S14',
-    phaseKey: 'PHASE_IV',
-    phaseName: 'Phase IV: Disclosure',
-    title: 'Surrender & Non-Possession',
-    keywords: ['surrender', 'unpossessing', 'let nothing disturb', 'poverty', 'releasement', 'destiny']
-  },
-  {
-    step: 'S15',
-    phaseKey: 'PHASE_IV',
-    phaseName: 'Phase IV: Disclosure',
-    title: 'Ego-Dissolution & True Ground',
-    keywords: ['false self', 'ego', 'dissolution', 'form is emptiness', 'tat tvam asi', 'maya', 'clear light', 'unconditioned']
-  },
-
-  // Phase V: Reconception (S16 - S22)
-  {
-    step: 'S16',
-    phaseKey: 'PHASE_V',
-    phaseName: 'Phase V: Reconception',
-    title: 'God Beyond Theism (The Godhead)',
-    keywords: ['rid me of god', 'god above god', 'beyond theism', 'theologian of cross', 'ground of being']
-  },
-  {
-    step: 'S17',
-    phaseKey: 'PHASE_V',
-    phaseName: 'Phase V: Reconception',
-    title: 'Divine Absence as Dark Presence',
-    keywords: ['dark night of nothingness', 'absence', 'bolted door', 'abandonment', 'night', 'cold']
-  },
-  {
-    step: 'S18',
-    phaseKey: 'PHASE_V',
-    phaseName: 'Phase V: Reconception',
-    title: 'Linguistic Collapse & Ineffability',
-    keywords: ['neti neti', 'straw', 'cannot be told', 'unspoken', 'beyond mind', 'unknown']
-  },
-  {
-    step: 'S19',
-    phaseKey: 'PHASE_V',
-    phaseName: 'Phase V: Reconception',
-    title: 'Sacred Silence',
-    keywords: ['silence', 'first language', 'unreasonable silence', 'still', 'quietude']
-  },
-  {
-    step: 'S20',
-    phaseKey: 'PHASE_V',
-    phaseName: 'Phase V: Reconception',
-    title: 'Symbolic Practice & Kenosis',
-    keywords: ['symbolic', 'kenosis', 'emptying', 'subtraction', 'ground']
-  },
-  {
-    step: 'S21',
-    phaseKey: 'PHASE_V',
-    phaseName: 'Phase V: Reconception',
-    title: 'Metanoia & Transformed Vision',
-    keywords: ['attitude', 'transformation', 'metanoia', 'renewal', 'revaluation']
-  },
-  {
-    step: 'S22',
-    phaseKey: 'PHASE_V',
-    phaseName: 'Phase V: Reconception',
-    title: 'Nothingness as Temporal Transcendence',
-    keywords: ['nothing is means', 'das nichts', 'point of nothingness', 'empty hub', 'unconditioned', 'nirvana', 'sunyata']
-  }
-];
-
 export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   nodes,
   edges,
   searchQuery,
   selectedCategory,
   onSelectNode,
-  selectedNodeId
+  selectedNodeId,
+  densityMode = 'core',
+  highlightedPath = null
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Transform state (pan / zoom)
+  // Transform state (pan / zoom) with unrestricted macro-to-micro scale
   const transformRef = useRef({ x: 0, y: 0, k: 0.75 });
   const isDraggingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const draggedNodeRef = useRef<SimNode | null>(null);
   const hoveredNodeRef = useRef<SimNode | null>(null);
+  const hasAutoFittedRef = useRef<boolean>(false);
 
   // Heatmap Layer State
   const [isHeatmapActive, setIsHeatmapActive] = useState<boolean>(false);
   const [selectedPhase, setSelectedPhase] = useState<OntologicalPhaseKey>('ALL');
 
-  // Binaural Audio State
-  const [audioState, setAudioState] = useState<BinauralAudioState>(() => binauralAudio.getState());
+  // Physics & Visual Optics State
+  const [physicsConfig, setPhysicsConfig] = useState<PhysicsConfig>(DEFAULT_PHYSICS_CONFIG);
+  const [opticsConfig, setOpticsConfig] = useState<OpticsConfig>(DEFAULT_OPTICS_CONFIG);
+  const [isPhysicsPanelOpen, setIsPhysicsPanelOpen] = useState<boolean>(false);
 
   // D3 Force Simulation Reference
   const simulationRef = useRef<d3.Simulation<SimNode, SimLink> | null>(null);
@@ -251,42 +96,105 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
   const animationFrameRef = useRef<number | null>(null);
 
   const [hoveredNode, setHoveredNode] = useState<SimNode | null>(null);
+  const [hotSpotCount, setHotSpotCount] = useState<number>(0);
 
-  // Subscribe to audio engine state changes
-  useEffect(() => {
-    const unsubscribe = binauralAudio.subscribe(setAudioState);
-    return () => {
-      unsubscribe();
+  // True Bounding-Box Auto-Fit Function with Smooth Easing
+  const fitGraphToViewport = useCallback((durationMs: number = 450) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const width = canvas.width || 1000;
+    const height = canvas.height || 750;
+    const activeNodes = simNodesRef.current;
+
+    if (activeNodes.length === 0) {
+      transformRef.current = { x: width / 2, y: height / 2, k: 0.75 };
+      return;
+    }
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (let i = 0; i < activeNodes.length; i++) {
+      const n = activeNodes[i];
+      const nx = n.x ?? 0;
+      const ny = n.y ?? 0;
+      if (nx < minX) minX = nx;
+      if (nx > maxX) maxX = nx;
+      if (ny < minY) minY = ny;
+      if (ny > maxY) maxY = ny;
+    }
+
+    if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
+      minX = -300;
+      maxX = 300;
+      minY = -300;
+      maxY = 300;
+    }
+
+    const graphWidth = Math.max(100, maxX - minX);
+    const graphHeight = Math.max(100, maxY - minY);
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const optimalK = Math.max(0.005, Math.min(2.0, 0.85 * Math.min(width / graphWidth, height / graphHeight)));
+    const targetK = optimalK;
+    const targetX = width / 2 - centerX * optimalK;
+    const targetY = height / 2 - centerY * optimalK;
+
+    if (durationMs <= 0) {
+      transformRef.current = { x: targetX, y: targetY, k: targetK };
+      return;
+    }
+
+    const startX = transformRef.current.x;
+    const startY = transformRef.current.y;
+    const startK = transformRef.current.k;
+    const startTime = performance.now();
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(1, elapsed / durationMs);
+      // easeInOutCubic
+      const ease =
+        progress < 0.5
+          ? 4 * progress * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+      transformRef.current = {
+        x: startX + (targetX - startX) * ease,
+        y: startY + (targetY - startY) * ease,
+        k: startK + (targetK - startK) * ease
+      };
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
     };
+
+    requestAnimationFrame(animate);
   }, []);
 
-  // Update audio frequency when a node is selected or deselected
+  // Center viewport on highlighted dialectical path when activated
   useEffect(() => {
-    if (selectedNodeId) {
-      const selected = nodeMapRef.current.get(selectedNodeId);
-      if (selected) {
-        binauralAudio.setThermalFrequency(selected.heatScore || 0.05, selected.label);
-      }
-    } else {
-      // Return to baseline grounding frequency
-      binauralAudio.setThermalFrequency(0.05, 'Baseline Ground');
-    }
-  }, [selectedNodeId]);
-
-  // Index figure step activity counts across all 52 thinkers
-  const stepFigureIntersectionMap = useMemo(() => {
-    const map = new Map<string, string[]>();
-    for (const fig of JOURNAL_FIGURES) {
-      for (const step of fig.stepsActivated) {
-        const list = map.get(step) || [];
-        list.push(fig.name);
-        map.set(step, list);
+    if (highlightedPath && highlightedPath.pathNodes.length > 0) {
+      const midNode = highlightedPath.pathNodes[Math.floor(highlightedPath.pathNodes.length / 2)];
+      const simNode = nodeMapRef.current.get(midNode.id);
+      if (simNode && typeof simNode.x === 'number' && typeof simNode.y === 'number') {
+        const width = containerRef.current?.clientWidth || 1000;
+        const height = containerRef.current?.clientHeight || 750;
+        transformRef.current = {
+          x: width / 2 - simNode.x * 0.85,
+          y: height / 2 - simNode.y * 0.85,
+          k: 0.85
+        };
       }
     }
-    return map;
-  }, []);
+  }, [highlightedPath]);
 
-  // Compute highest intersection steps for each phase
+  // Phase nexus summaries
   const phaseNexusSummary = useMemo(() => {
     const summary: Record<OntologicalPhaseKey, { nexusStep: string; title: string; count: number }> = {
       ALL: { nexusStep: 'S22 & S1', title: 'Temporal Transcendence & Axiological Void', count: 17 },
@@ -299,145 +207,44 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     return summary;
   }, []);
 
-  // Thermal Color Mapper based on Activity Heat Score (0.0 to 1.0)
-  const getThermalColor = (score: number): string => {
-    if (score >= 0.90) return '#fff0a8'; // Supernova Hot Gold / White
-    if (score >= 0.75) return '#f43f5e'; // Radiant Crimson / Hot Coral
-    if (score >= 0.55) return '#f59e0b'; // Solar Amber
-    if (score >= 0.38) return '#10b981'; // Emerald Active
-    if (score >= 0.20) return '#06b6d4'; // Electric Azure / Cyan
-    return '#312e81'; // Deep Cosmic Indigo (Cold Baseline)
-  };
-
-  // Category and Stratum color mapper with rich cosmic obsidian palette
-  const getNodeColor = (node: GraphNode): string => {
-    if (node.id === selectedNodeId) return '#fff0a8'; // Highlight color
-    if (node.stratum === 'L5_ONTOLOGICAL_CLAIM') return '#f43f5e'; // Rose
-    if (node.stratum === 'L2_PHENOMENOLOGICAL_STRUCTURE') return '#c084fc'; // Purple / Void
-    if (node.stratum === 'L1_REPORT') return '#38bdf8'; // Sky Blue
-    if (node.stratum === 'L4_CAUSAL_EXPLANATION') return '#fbbf24'; // Amber
-    if (node.stratum === 'L3_INTERPRETIVE_CLASSIFICATION') return '#818cf8'; // Violet
-    if (node.type === 'document') return '#10b981'; // Ingested document: Emerald
-    if (node.type === 'quote') return '#f59e0b'; // Amber
-    if (node.type === 'root') return '#6366f1'; // Indigo
-    if (node.type === 'theme') return '#818cf8'; // Violet
-    if (node.type === 'figure') return '#ec4899'; // Pink
-    if (node.provenance?.documentId) return '#06b6d4'; // Ingested entity: Cyan
-    if (node.roaeProvenance) return '#a855f7'; // ROAE Candidate Node
-    if (node.level === 1) return '#4f46e5';
-    if (node.level === 2) return '#4338ca';
-    return '#2e2e78';
-  };
-
-  // Synchronize incoming nodes & edges with D3 Force Simulation and calculate Heat Scores
+  // Synchronize incoming nodes & edges with D3 Force Simulation
   useEffect(() => {
     const width = containerRef.current?.clientWidth || 1000;
     const height = containerRef.current?.clientHeight || 750;
     const centerX = width / 2;
     const centerY = height / 2;
 
-    // Filter nodes by category if selected
-    const filteredNodes = nodes.filter(n => {
-      if (selectedCategory !== 'ALL') {
-        if (selectedCategory === 'DOCUMENT' && n.type !== 'document') return false;
-        if (selectedCategory === 'CANONICAL' && (n.provenance?.documentId || n.roaeProvenance)) return false;
-        if (selectedCategory === 'INGESTED' && !n.provenance?.documentId && n.type !== 'document') return false;
-        if (selectedCategory === 'ROAE' && !n.roaeProvenance) return false;
-        if (selectedCategory === 'L1_REPORT' && n.stratum !== 'L1_REPORT') return false;
-        if (selectedCategory === 'L2_PHENOMENOLOGY' && n.stratum !== 'L2_PHENOMENOLOGICAL_STRUCTURE') return false;
-        if (selectedCategory === 'L5_ONTOLOGY' && n.stratum !== 'L5_ONTOLOGICAL_CLAIM') return false;
-      }
-      return true;
+    // Pre-Simulation Density Governor: Deterministically select active topology subset
+    const pathNodeIds = highlightedPath?.pathNodes ? new Set(highlightedPath.pathNodes.map(n => n.id)) : null;
+    const { activeNodes: filteredNodes, activeEdges: preselectedEdges } = graphIndex.getActiveSubgraph({
+      densityMode,
+      selectedCategory,
+      searchQuery,
+      selectedNodeId,
+      hoveredNodeId: hoveredNodeRef.current?.id,
+      pathNodeIds
     });
 
     const activeNodeIdSet = new Set(filteredNodes.map(n => n.id));
     const previousMap = nodeMapRef.current;
     const nextMap = new Map<string, SimNode>();
     const simNodeList: SimNode[] = [];
-
-    // Precompute figure name map for rapid lookup
-    const figureDataMap = new Map<string, typeof JOURNAL_FIGURES[0]>();
-    for (const f of JOURNAL_FIGURES) {
-      figureDataMap.set(f.name.toLowerCase(), f);
-      figureDataMap.set(f.id, f);
-    }
+    let hotSpots = 0;
 
     for (let i = 0; i < filteredNodes.length; i++) {
       const n = filteredNodes[i];
       const prev = previousMap.get(n.id);
-      const baseRadius = n.type === 'root' ? 16 : (n.type === 'document' ? 13 : (n.isLeaf ? 5.5 : 8.5));
+      const baseRadius = n.type === 'root' ? 16 : n.type === 'document' ? 13 : n.isLeaf ? 5.5 : 8.5;
 
-      // -------------------------------------------------------------
-      // THEMATIC ACTIVATION SCORE H(n) COMPUTATION
-      // Formula: H(n) = min(1.0, B + (k_steps * w_s) + (I_figures * w_f))
-      // -------------------------------------------------------------
-      const B = n.type === 'root' ? 0.65 : 0.05; // Baseline resting temperature
-      const ws = 0.12; // Heuristic weight for active thematic steps
-      const wf = 0.035; // Heuristic weight for intersecting thinker citations
-
-      let matchedSteps: string[] = [];
-      let totalIntersections = 0;
-      let dominantPhase = 'General Ground';
-
-      // 1. Check if node is an ingested Journal314 Figure or Figure entity
-      const lowerLabel = n.label.toLowerCase();
-      let matchedFig: typeof JOURNAL_FIGURES[0] | undefined;
-
-      for (const [figKey, figObj] of figureDataMap.entries()) {
-        if (lowerLabel.includes(figKey) || n.id.includes(figObj.id)) {
-          matchedFig = figObj;
-          break;
-        }
+      // Instant O(1) Thermal Metrics Computation from GraphIndex
+      const thermal = graphIndex.getThermalMetrics(n.id, selectedPhase);
+      const heatScore = thermal.heatScore;
+      if (heatScore >= 0.75) {
+        hotSpots++;
       }
 
-      if (matchedFig) {
-        // Scoped steps in current active phase
-        const relevantSteps = matchedFig.stepsActivated.filter(st => {
-          if (selectedPhase === 'ALL') return true;
-          const desc = THEMATIC_STEPS_CATALOG.find(cat => cat.step === st);
-          return desc?.phaseKey === selectedPhase;
-        });
-
-        matchedSteps = relevantSteps;
-        dominantPhase = matchedFig.clusterName;
-
-        for (const st of relevantSteps) {
-          const intersecting = stepFigureIntersectionMap.get(st) || [];
-          totalIntersections += intersecting.length;
-        }
-      } else {
-        // 2. Canonical, conceptual, and topic nodes: match against 22 thematic steps keywords
-        const nodeText = `${n.label} ${n.provenance?.snippet || ''}`.toLowerCase();
-
-        for (const desc of THEMATIC_STEPS_CATALOG) {
-          if (selectedPhase !== 'ALL' && desc.phaseKey !== selectedPhase) continue;
-
-          for (const kw of desc.keywords) {
-            if (nodeText.includes(kw)) {
-              if (!matchedSteps.includes(desc.step)) {
-                matchedSteps.push(desc.step);
-                const inter = stepFigureIntersectionMap.get(desc.step) || [];
-                totalIntersections += inter.length;
-                dominantPhase = desc.phaseName;
-              }
-            }
-          }
-        }
-      }
-
-      const k_steps = matchedSteps.length;
-      const I_figures = totalIntersections;
-
-      // Deterministic calculation of H(n)
-      let heatScore: number;
-      if (k_steps > 0 || n.type === 'root') {
-        heatScore = Math.min(1.0, B + (k_steps * ws) + (I_figures * wf));
-      } else {
-        heatScore = B;
-      }
-
-      const displayRadius = isHeatmapActive && heatScore >= 0.75 ? baseRadius + 2.5 : baseRadius;
-      const displayColor = isHeatmapActive ? getThermalColor(heatScore) : getNodeColor(n);
+      const displayRadius = isHeatmapActive && heatScore >= 0.75 ? baseRadius + thermal.radiusOffset : baseRadius;
+      const displayColor = isHeatmapActive ? thermal.color : getNodeBaseColor(n);
 
       if (prev) {
         const updated: SimNode = {
@@ -445,11 +252,11 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           radius: displayRadius,
           color: displayColor,
           heatScore,
-          heatPhase: dominantPhase,
+          heatPhase: thermal.heatPhase,
           heatDetails: {
-            activeSteps: matchedSteps,
-            figureCount: totalIntersections,
-            topNexus: matchedSteps.join(', ') || 'Baseline Topology'
+            activeSteps: thermal.activeSteps,
+            figureCount: thermal.figureCount,
+            topNexus: thermal.topNexus
           },
           x: prev.x,
           y: prev.y,
@@ -463,7 +270,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       } else {
         const isTree2 = n.id.startsWith('cross-cut') || n.id.startsWith('t-');
         const baseAngle = isTree2 ? Math.PI * 1.1 : 0.1;
-        const angle = baseAngle + (i * 0.38);
+        const angle = baseAngle + i * 0.38;
         const dist = 140 + Math.sqrt(i) * 55;
 
         const newNode: SimNode = {
@@ -471,11 +278,11 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           radius: displayRadius,
           color: displayColor,
           heatScore,
-          heatPhase: dominantPhase,
+          heatPhase: thermal.heatPhase,
           heatDetails: {
-            activeSteps: matchedSteps,
-            figureCount: totalIntersections,
-            topNexus: matchedSteps.join(', ') || 'Baseline Topology'
+            activeSteps: thermal.activeSteps,
+            figureCount: thermal.figureCount,
+            topNexus: thermal.topNexus
           },
           x: centerX + Math.cos(angle) * dist,
           y: centerY + Math.sin(angle) * dist,
@@ -487,18 +294,25 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       }
     }
 
+    setHotSpotCount(hotSpots);
     nodeMapRef.current = nextMap;
     simNodesRef.current = simNodeList;
 
-    // Filter and prepare links
+    // Update Spatial Hash Grid for O(1) hit testing
+    graphIndex.updateSpatialGrid(simNodeList);
+
+    // Filter and sanitize links using preselectedEdges from Governor
     const simLinkList: SimLink[] = [];
-    for (let i = 0; i < edges.length; i++) {
-      const e = edges[i];
-      if (activeNodeIdSet.has(e.source) && activeNodeIdSet.has(e.target)) {
+    for (let i = 0; i < preselectedEdges.length; i++) {
+      const e = preselectedEdges[i];
+      const sId = typeof e.source === 'object' && e.source !== null ? (e.source as { id: string }).id : String(e.source);
+      const tId = typeof e.target === 'object' && e.target !== null ? (e.target as { id: string }).id : String(e.target);
+
+      if (activeNodeIdSet.has(sId) && activeNodeIdSet.has(tId)) {
         simLinkList.push({
           id: e.id,
-          source: e.source,
-          target: e.target,
+          source: sId,
+          target: tId,
           type: e.type,
           dialecticalRelation: e.dialecticalRelation,
           label: e.label
@@ -507,66 +321,132 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     }
     simLinksRef.current = simLinkList;
 
-    // Initialize or reconfigure D3 Force Simulation
+    // Simulation management: scale physics gracefully with live parameters
     if (!simulationRef.current) {
-      const simulation = d3.forceSimulation<SimNode>(simNodeList)
-        // 1. Amplified Repulsion Invariant (Many-body force)
-        .force('charge', d3.forceManyBody<SimNode>().strength(-400))
-        // 2. Rigid Structural Span (Link distance)
+      const simulation = d3
+        .forceSimulation<SimNode>(simNodeList)
+        .force('charge', d3.forceManyBody<SimNode>().strength(physicsConfig.repulsion))
         .force(
           'link',
-          d3.forceLink<SimNode, SimLink>(simLinkList)
+          d3
+            .forceLink<SimNode, SimLink>(simLinkList)
             .id(d => d.id)
-            .distance(80)
+            .distance(physicsConfig.linkDistance)
         )
-        // 3. Boundary Firewall (Custom collision force dynamically tied to node radius + buffer)
         .force(
           'collide',
-          d3.forceCollide<SimNode>()
-            .radius(d => d.radius + 14)
-            .iterations(2)
+          d3
+            .forceCollide<SimNode>()
+            .radius(d => d.radius + physicsConfig.collisionRadius)
+            .iterations(1)
         )
-        // 4. Gravity Dampener (Central gravity force reduced to 0.05)
-        .force('x', d3.forceX<SimNode>(centerX).strength(0.05))
-        .force('y', d3.forceY<SimNode>(centerY).strength(0.05))
-        .velocityDecay(0.35)
-        .alphaDecay(0.015);
+        .force('x', d3.forceX<SimNode>(centerX).strength(physicsConfig.gravity))
+        .force('y', d3.forceY<SimNode>(centerY).strength(physicsConfig.gravity))
+        .velocityDecay(0.4)
+        .alphaDecay(0.025);
+
+      simulation.on('tick', () => {
+        graphIndex.updateSpatialGrid(simNodesRef.current);
+      });
 
       simulationRef.current = simulation;
+
+      // Automatically frame and fit active graph once after initial pre-warming
+      if (!hasAutoFittedRef.current) {
+        hasAutoFittedRef.current = true;
+        setTimeout(() => {
+          fitGraphToViewport(0);
+        }, 120);
+      }
     } else {
       const simulation = simulationRef.current;
       simulation.nodes(simNodeList);
 
       const linkForce = simulation.force<d3.ForceLink<SimNode, SimLink>>('link');
       if (linkForce) {
-        linkForce.links(simLinkList).distance(80);
+        linkForce.links(simLinkList).distance(physicsConfig.linkDistance);
       }
 
       const chargeForce = simulation.force<d3.ForceManyBody<SimNode>>('charge');
       if (chargeForce) {
-        chargeForce.strength(-400);
+        chargeForce.strength(physicsConfig.repulsion);
       }
 
       const collideForce = simulation.force<d3.ForceCollide<SimNode>>('collide');
       if (collideForce) {
-        collideForce.radius(d => d.radius + 14);
+        collideForce.radius(d => d.radius + physicsConfig.collisionRadius);
       }
 
       const forceX = simulation.force<d3.ForceX<SimNode>>('x');
       if (forceX) {
-        forceX.x(centerX).strength(0.05);
+        forceX.x(centerX).strength(physicsConfig.gravity);
       }
 
       const forceY = simulation.force<d3.ForceY<SimNode>>('y');
       if (forceY) {
-        forceY.y(centerY).strength(0.05);
+        forceY.y(centerY).strength(physicsConfig.gravity);
       }
 
-      simulation.alpha(0.15).restart();
+      if (!physicsConfig.isFrozen) {
+        simulation.alpha(0.12).restart();
+      }
     }
-  }, [nodes, edges, selectedCategory, selectedNodeId, isHeatmapActive, selectedPhase]);
+  }, [
+    nodes,
+    edges,
+    selectedCategory,
+    selectedNodeId,
+    isHeatmapActive,
+    selectedPhase,
+    densityMode,
+    highlightedPath,
+    searchQuery,
+    fitGraphToViewport
+  ]);
 
-  // Canvas Render Loop with Thermal Heat-mapping Layer
+  // Handle live Physics parameter adjustments
+  useEffect(() => {
+    const simulation = simulationRef.current;
+    if (!simulation) return;
+
+    const width = canvasRef.current?.width || 1000;
+    const height = canvasRef.current?.height || 750;
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    const chargeForce = simulation.force<d3.ForceManyBody<SimNode>>('charge');
+    if (chargeForce) {
+      chargeForce.strength(physicsConfig.repulsion);
+    }
+
+    const linkForce = simulation.force<d3.ForceLink<SimNode, SimLink>>('link');
+    if (linkForce) {
+      linkForce.distance(physicsConfig.linkDistance);
+    }
+
+    const collideForce = simulation.force<d3.ForceCollide<SimNode>>('collide');
+    if (collideForce) {
+      collideForce.radius(d => d.radius + physicsConfig.collisionRadius);
+    }
+
+    const forceX = simulation.force<d3.ForceX<SimNode>>('x');
+    if (forceX) {
+      forceX.x(centerX).strength(physicsConfig.gravity);
+    }
+
+    const forceY = simulation.force<d3.ForceY<SimNode>>('y');
+    if (forceY) {
+      forceY.y(centerY).strength(physicsConfig.gravity);
+    }
+
+    if (physicsConfig.isFrozen) {
+      simulation.stop();
+    } else {
+      simulation.alpha(0.35).restart();
+    }
+  }, [physicsConfig]);
+
+  // High-performance Canvas Render Loop with Viewport Culling & Visual Optics
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -580,7 +460,20 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
       const width = canvas.width;
       const height = canvas.height;
-      ctx.clearRect(0, 0, width, height);
+
+      // 1. Deep Anodized Gunmetal Smoky Atmosphere
+      const bgGrad = ctx.createRadialGradient(
+        width / 2,
+        height / 2,
+        Math.min(width, height) * 0.1,
+        width / 2,
+        height / 2,
+        Math.max(width, height) * 0.75
+      );
+      bgGrad.addColorStop(0, 'rgba(32, 38, 46, 0.94)'); // Inner focal nebula (#20262e)
+      bgGrad.addColorStop(1, 'rgba(18, 22, 27, 0.99)'); // Outer gunmetal slate (#12161b)
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
 
       // Save canvas transform
       ctx.save();
@@ -588,10 +481,23 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       ctx.translate(tx, ty);
       ctx.scale(k, k);
 
+      // Viewport Bounds in Graph Coordinates with 60px safety margin
+      const margin = 60 / k;
+      const xMin = -tx / k - margin;
+      const yMin = -ty / k - margin;
+      const xMax = (width - tx) / k + margin;
+      const yMax = (height - ty) / k + margin;
+
       const nodeList = simNodesRef.current;
       const linkList = simLinksRef.current;
+      const hoveredId = hoveredNodeRef.current?.id;
 
-      // 1. Render Links / Edges
+      const pathNodeSet = highlightedPath?.pathNodes ? new Set(highlightedPath.pathNodes.map(n => n.id)) : null;
+      const pathEdgeSet = highlightedPath?.pathEdges ? new Set(highlightedPath.pathEdges.map(e => e.id)) : null;
+
+      const { nodeSize, lineThickness, lineOpacity, labelMode, labelSize } = opticsConfig;
+
+      // 2. Render Links / Edges (With Viewport Culling & Live Optics)
       for (let i = 0; i < linkList.length; i++) {
         const link = linkList[i];
         let sx = 0;
@@ -625,112 +531,199 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           targetId = tNode.id;
         }
 
-        const isHovered = hoveredNodeRef.current && (hoveredNodeRef.current.id === sourceId || hoveredNodeRef.current.id === targetId);
+        // Viewport Culling for Edges
+        const sInside = sx >= xMin && sx <= xMax && sy >= yMin && sy <= yMax;
+        const tInside = txNode >= xMin && txNode <= xMax && tyNode >= yMin && tyNode <= yMax;
+        if (!sInside && !tInside) continue;
+
+        const isHovered = hoveredId && (hoveredId === sourceId || hoveredId === targetId);
+        const isPathEdge =
+          (pathEdgeSet && pathEdgeSet.has(link.id)) ||
+          (pathNodeSet && pathNodeSet.has(sourceId) && pathNodeSet.has(targetId));
 
         ctx.beginPath();
         ctx.moveTo(sx, sy);
         ctx.lineTo(txNode, tyNode);
 
-        if (isHovered) {
-          ctx.strokeStyle = '#fff0a8';
-          ctx.lineWidth = 2.0;
+        if (isPathEdge) {
+          // Dialectical Synthesis Beam (Glacier Cyan)
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 3.2 * lineThickness;
+          ctx.shadowColor = '#38bdf8';
+          ctx.shadowBlur = 12;
+        } else if (isHovered) {
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = 'rgba(229, 193, 88, 0.90)'; // Champagne Gold
+          ctx.lineWidth = 1.8 * lineThickness;
         } else if (isHeatmapActive) {
-          // Heatmap thermal edge gradient: highlights connection paths between hot nodes
+          ctx.shadowBlur = 0;
           const sHeat = nodeMapRef.current.get(sourceId)?.heatScore || 0;
           const tHeat = nodeMapRef.current.get(targetId)?.heatScore || 0;
           const avgHeat = (sHeat + tHeat) / 2;
 
-          if (avgHeat >= 0.70) {
-            ctx.strokeStyle = 'rgba(244, 63, 94, 0.45)';
-            ctx.lineWidth = 1.4;
-          } else if (avgHeat >= 0.40) {
-            ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
-            ctx.lineWidth = 1.0;
+          if (avgHeat >= 0.7) {
+            ctx.strokeStyle = `rgba(244, 63, 94, ${Math.min(1.0, lineOpacity * 1.3)})`;
+            ctx.lineWidth = 1.4 * lineThickness;
+          } else if (avgHeat >= 0.4) {
+            ctx.strokeStyle = `rgba(245, 158, 11, ${Math.min(1.0, lineOpacity * 1.1)})`;
+            ctx.lineWidth = 1.0 * lineThickness;
           } else {
-            ctx.strokeStyle = 'rgba(49, 46, 129, 0.25)';
-            ctx.lineWidth = 0.65;
+            ctx.strokeStyle = `rgba(148, 163, 184, ${Math.min(1.0, lineOpacity * 0.6)})`;
+            ctx.lineWidth = 0.65 * lineThickness;
           }
         } else if (link.type === 'semantic') {
-          ctx.strokeStyle = 'rgba(6, 182, 212, 0.45)';
-          ctx.lineWidth = 1.2;
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = `rgba(45, 212, 191, ${Math.min(1.0, lineOpacity * 1.1)})`; // Silver-Teal
+          ctx.lineWidth = 1.1 * lineThickness;
         } else if (link.dialecticalRelation === 'grounds' || link.dialecticalRelation === 'limits') {
-          ctx.strokeStyle = 'rgba(168, 85, 247, 0.4)';
-          ctx.lineWidth = 1.2;
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = `rgba(56, 189, 248, ${Math.min(1.0, lineOpacity * 1.1)})`; // Glacier Cyan
+          ctx.lineWidth = 1.1 * lineThickness;
         } else {
-          ctx.strokeStyle = 'rgba(99, 102, 241, 0.25)';
-          ctx.lineWidth = 0.85;
+          // Standard Smoky Translucent Silver-Slate Filaments controlled by lineOpacity slider
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = `rgba(168, 179, 194, ${lineOpacity})`;
+          ctx.lineWidth = 0.85 * lineThickness;
         }
         ctx.stroke();
       }
+      ctx.shadowBlur = 0;
 
-      // 2. Render Nodes with Thermal Hot Spots & Radiance Auras
+      // 3. Render Nodes with Glassmorphic Orbs & Anti-Disappearance Floor
       const query = searchQuery.trim().toLowerCase();
+      const matchSet = query ? new Set(graphIndex.searchNodes(query, 500)) : null;
 
       for (let i = 0; i < nodeList.length; i++) {
         const node = nodeList[i];
         const nx = node.x || 0;
         const ny = node.y || 0;
-        const isMatch = query ? node.label.toLowerCase().includes(query) : false;
+
+        // Viewport Culling for Nodes
+        if (nx < xMin || nx > xMax || ny < yMin || ny > yMax) continue;
+
+        const isMatch = matchSet ? matchSet.has(node.id) || node.label.toLowerCase().includes(query) : false;
         const isSelected = selectedNodeId === node.id;
-        const isHovered = hoveredNodeRef.current?.id === node.id;
+        const isHovered = hoveredId === node.id;
+        const isPathNode = pathNodeSet ? pathNodeSet.has(node.id) : false;
+        const isCanonicalHub =
+          node.type === 'root' ||
+          (!node.provenance?.documentId && !node.roaeProvenance) ||
+          (node.level !== undefined && node.level <= 1);
         const heat = node.heatScore || 0;
         const isHotSpot = isHeatmapActive && heat >= 0.75;
 
-        // A. THERMAL HOT SPOT RADIANT AURA
-        if (isHotSpot) {
-          // Tier 1: Outer diffuse thermal field (radius + 12px, alpha 0.20-0.25)
+        // Unrestricted Deep-Space Zoom: Enforce minimum screen-space pixel radius (Math.max(1.2 / k, nodeRadius * nodeSize))
+        // This ensures nodes never vanish into sub-pixel invisibility even at ultra-wide macro zoom (k = 0.003x)
+        const effectiveRadius = Math.max(1.2 / k, node.radius * nodeSize);
+
+        // A. Atmospheric Halo on Hubs, Path, Selection, and Hotspots
+        if (isPathNode) {
           ctx.beginPath();
-          ctx.arc(nx, ny, node.radius + 12, 0, Math.PI * 2);
-          ctx.fillStyle = heat >= 0.90 ? 'rgba(255, 240, 168, 0.25)' : 'rgba(244, 63, 94, 0.20)';
+          ctx.arc(nx, ny, effectiveRadius + 9 * nodeSize, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
           ctx.fill();
 
-          // Tier 2: Mid-range intense ionization ring (radius + 6px, alpha 0.35-0.40)
           ctx.beginPath();
-          ctx.arc(nx, ny, node.radius + 6, 0, Math.PI * 2);
-          ctx.fillStyle = heat >= 0.90 ? 'rgba(244, 63, 94, 0.40)' : 'rgba(245, 158, 11, 0.35)';
+          ctx.arc(nx, ny, effectiveRadius + 4 * nodeSize, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(229, 193, 88, 0.55)';
           ctx.fill();
-        } else if (isSelected || isMatch || node.type === 'root' || node.type === 'document' || node.stratum === 'L5_ONTOLOGICAL_CLAIM') {
-          // Standard Cosmic Aura Glow
+        } else if (isHotSpot) {
           ctx.beginPath();
-          ctx.arc(nx, ny, node.radius + (isSelected ? 7 : (isMatch ? 5 : 4)), 0, Math.PI * 2);
+          ctx.arc(nx, ny, effectiveRadius + 10 * nodeSize, 0, Math.PI * 2);
+          ctx.fillStyle = heat >= 0.9 ? 'rgba(255, 240, 168, 0.20)' : 'rgba(244, 63, 94, 0.18)';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(nx, ny, effectiveRadius + 5 * nodeSize, 0, Math.PI * 2);
+          ctx.fillStyle = heat >= 0.9 ? 'rgba(244, 63, 94, 0.35)' : 'rgba(245, 158, 11, 0.30)';
+          ctx.fill();
+        } else if (isSelected || isHovered || isMatch || isCanonicalHub) {
+          const haloBoost = isSelected ? 7 : isHovered ? 6 : isMatch ? 5 : 4;
+          ctx.beginPath();
+          ctx.arc(nx, ny, effectiveRadius + haloBoost * nodeSize, 0, Math.PI * 2);
           ctx.fillStyle = isSelected
-            ? 'rgba(255, 240, 168, 0.4)'
-            : (isMatch
-                ? 'rgba(255, 240, 168, 0.55)'
-                : (node.stratum === 'L5_ONTOLOGICAL_CLAIM'
-                    ? 'rgba(244, 63, 94, 0.25)'
-                    : 'rgba(99, 102, 241, 0.28)'));
+            ? 'rgba(229, 193, 88, 0.28)'
+            : isHovered
+            ? 'rgba(56, 189, 248, 0.22)'
+            : isMatch
+            ? 'rgba(255, 240, 168, 0.35)'
+            : 'rgba(229, 193, 88, 0.15)';
           ctx.fill();
         }
 
-        // B. MAIN NODE CORE
+        // B. Translucent Glassmorphic Node Core (alpha 0.85)
+        ctx.save();
+        ctx.globalAlpha = 0.85;
         ctx.beginPath();
-        ctx.arc(nx, ny, node.radius, 0, Math.PI * 2);
-        ctx.fillStyle = isMatch ? '#fff0a8' : (isSelected ? '#ffffff' : node.color);
+        ctx.arc(nx, ny, effectiveRadius, 0, Math.PI * 2);
+        ctx.fillStyle = isMatch ? '#fff0a8' : isSelected ? '#ffffff' : node.color;
         ctx.fill();
+        ctx.restore();
 
-        // High-contrast border
+        // C. Crisp High-Luminance Mineral Rim
+        ctx.beginPath();
+        ctx.arc(nx, ny, effectiveRadius, 0, Math.PI * 2);
         ctx.strokeStyle = isSelected
-          ? '#fff0a8'
-          : (isHotSpot
-              ? (heat >= 0.90 ? '#fff0a8' : '#fda4af')
-              : (isMatch ? '#ffffff' : 'rgba(195, 195, 255, 0.45)'));
-        ctx.lineWidth = isSelected ? 2.5 : (isHotSpot ? 2.0 : (node.type === 'root' ? 2 : 1));
+          ? 'rgba(255, 240, 168, 0.98)'
+          : isHotSpot
+          ? heat >= 0.9
+            ? 'rgba(255, 240, 168, 0.95)'
+            : 'rgba(253, 164, 175, 0.95)'
+          : isMatch
+          ? 'rgba(255, 255, 255, 0.98)'
+          : isHovered
+          ? 'rgba(56, 189, 248, 0.95)'
+          : isCanonicalHub
+          ? 'rgba(229, 193, 88, 0.85)'
+          : 'rgba(203, 213, 225, 0.65)';
+        ctx.lineWidth = (isSelected ? 2.0 : 1.25) * Math.min(2.0, Math.max(0.7, nodeSize));
         ctx.stroke();
 
-        // C. LABEL RENDERING
-        const showLabel = k > 0.75 || isHotSpot || node.type === 'root' || node.type === 'document' || isSelected || isHovered || isMatch;
+        // D. Label Rendering governed by Label Visibility Mode & Size
+        const showLabel =
+          labelMode === 'always'
+            ? true
+            : labelMode === 'focused'
+            ? isSelected || isHovered || isMatch || node.type === 'root'
+            : k > 0.75 ||
+              isHotSpot ||
+              node.type === 'root' ||
+              node.type === 'document' ||
+              isSelected ||
+              isHovered ||
+              isMatch;
+
         if (showLabel) {
-          ctx.font = `${isHotSpot ? 'bold 11px' : (node.type === 'root' ? 'bold 12px' : (node.level <= 1 ? '600 11px' : '10px'))} Inter, sans-serif`;
+          const baseFontSize = isHotSpot
+            ? 11
+            : node.type === 'root'
+            ? 12
+            : node.level !== undefined && node.level <= 1
+            ? 11
+            : 10;
+          const finalFontSize = Math.round(baseFontSize * labelSize);
+          ctx.font = `${
+            isHotSpot || node.type === 'root'
+              ? 'bold '
+              : node.level !== undefined && node.level <= 1
+              ? '600 '
+              : ''
+          }${finalFontSize}px Inter, sans-serif`;
+
           ctx.fillStyle = isMatch
             ? '#fff0a8'
-            : (isSelected
-                ? '#ffffff'
-                : (isHotSpot
-                    ? '#ffe4e6'
-                    : (node.type === 'root' ? '#e0e7ff' : 'rgba(246, 247, 255, 0.92)')));
+            : isSelected
+            ? '#ffffff'
+            : isHotSpot
+            ? '#ffe4e6'
+            : isHovered
+            ? '#38bdf8'
+            : node.type === 'root'
+            ? '#f1f5f9'
+            : 'rgba(241, 245, 249, 0.92)';
+
           const text = node.label.length > 32 ? node.label.slice(0, 29) + '...' : node.label;
-          ctx.fillText(text, nx + node.radius + 6, ny + 3.5);
+          ctx.fillText(text, nx + effectiveRadius + 6, ny + 3.5);
         }
       }
 
@@ -744,7 +737,7 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       isRunning = false;
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [searchQuery, selectedNodeId, isHeatmapActive, selectedPhase]);
+  }, [searchQuery, selectedNodeId, isHeatmapActive, selectedPhase, opticsConfig]);
 
   // Window Resize Listener
   useEffect(() => {
@@ -759,14 +752,16 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
           const forceY = simulationRef.current.force<d3.ForceY<SimNode>>('y');
           if (forceX) forceX.x(centerX);
           if (forceY) forceY.y(centerY);
-          simulationRef.current.alpha(0.15).restart();
+          if (!physicsConfig.isFrozen) {
+            simulationRef.current.alpha(0.12).restart();
+          }
         }
       }
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [physicsConfig.isFrozen]);
 
   // Coordinate helper: Screen (pixel) to Graph Coordinates
   const toGraphCoords = useCallback((clientX: number, clientY: number) => {
@@ -782,21 +777,30 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
     };
   }, []);
 
-  // Find node at coordinates
-  const getNodeAt = useCallback((gx: number, gy: number): SimNode | null => {
-    const nodes = simNodesRef.current;
-    for (let i = nodes.length - 1; i >= 0; i--) {
-      const node = nodes[i];
-      const nx = node.x || 0;
-      const ny = node.y || 0;
-      const dx = gx - nx;
-      const dy = gy - ny;
-      if (dx * dx + dy * dy <= (node.radius + 8) * (node.radius + 8)) {
-        return node;
+  // O(1) Spatial Hash Grid Hit-testing
+  const getNodeAt = useCallback(
+    (gx: number, gy: number): SimNode | null => {
+      const candidates = graphIndex.getCandidatesNear(gx, gy);
+      const nodeMap = nodeMapRef.current;
+      const k = transformRef.current.k;
+
+      for (let i = candidates.length - 1; i >= 0; i--) {
+        const node = nodeMap.get(candidates[i]);
+        if (!node) continue;
+        const nx = node.x || 0;
+        const ny = node.y || 0;
+        const dx = gx - nx;
+        const dy = gy - ny;
+        const effectiveRadius = Math.max(1.2 / k, node.radius * opticsConfig.nodeSize);
+        const hitRadius = effectiveRadius + 8;
+        if (dx * dx + dy * dy <= hitRadius * hitRadius) {
+          return node;
+        }
       }
-    }
-    return null;
-  }, []);
+      return null;
+    },
+    [opticsConfig.nodeSize]
+  );
 
   // Mouse & Touch Interaction Handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -807,8 +811,8 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       draggedNodeRef.current = clickedNode;
       clickedNode.fx = clickedNode.x;
       clickedNode.fy = clickedNode.y;
-      if (simulationRef.current) {
-        simulationRef.current.alphaTarget(0.25).restart();
+      if (simulationRef.current && !physicsConfig.isFrozen) {
+        simulationRef.current.alphaTarget(0.2).restart();
       }
     } else {
       isDraggingRef.current = true;
@@ -830,11 +834,13 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       return;
     }
 
-    // Hover detection
+    // O(1) Instant Hover detection via Spatial Grid
     const { x: gx, y: gy } = toGraphCoords(e.clientX, e.clientY);
     const node = getNodeAt(gx, gy);
-    hoveredNodeRef.current = node;
-    setHoveredNode(node);
+    if (hoveredNodeRef.current !== node) {
+      hoveredNodeRef.current = node;
+      setHoveredNode(node);
+    }
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
@@ -847,65 +853,70 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
       draggedNodeRef.current.fx = null;
       draggedNodeRef.current.fy = null;
       draggedNodeRef.current = null;
-      if (simulationRef.current) {
+      if (simulationRef.current && !physicsConfig.isFrozen) {
         simulationRef.current.alphaTarget(0);
       }
     }
     isDraggingRef.current = false;
   };
 
+  // Unrestricted Macro-to-Micro Wheel Zoom with responsive delta curve
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    // Wheel sensitivity matching D3 wheelDelta specification
+    const delta = -e.deltaY * (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.0025);
+    const zoomFactor = Math.pow(2, delta);
+
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    const currentK = transformRef.current.k;
-    const newK = Math.max(0.12, Math.min(4.5, currentK * zoomFactor));
+    const { x: tx, y: ty, k: currentK } = transformRef.current;
+    // Unrestricted macro-to-micro zoom extent: 0.003x to 15x
+    const newK = Math.max(0.003, Math.min(15.0, currentK * zoomFactor));
 
-    // Zoom into mouse anchor position
-    transformRef.current.x = mouseX - (mouseX - transformRef.current.x) * (newK / currentK);
-    transformRef.current.y = mouseY - (mouseY - transformRef.current.y) * (newK / currentK);
-    transformRef.current.k = newK;
+    transformRef.current = {
+      x: mouseX - (mouseX - tx) * (newK / currentK),
+      y: mouseY - (mouseY - ty) * (newK / currentK),
+      k: newK
+    };
   };
 
-  // Viewport navigation controls
   const handleZoomIn = () => {
-    transformRef.current.k = Math.min(4.5, transformRef.current.k * 1.25);
+    const width = canvasRef.current?.width || 1000;
+    const height = canvasRef.current?.height || 750;
+    const { x: tx, y: ty, k: currentK } = transformRef.current;
+    const newK = Math.min(15.0, currentK * 1.3);
+    transformRef.current = {
+      x: width / 2 - (width / 2 - tx) * (newK / currentK),
+      y: height / 2 - (height / 2 - ty) * (newK / currentK),
+      k: newK
+    };
   };
 
   const handleZoomOut = () => {
-    transformRef.current.k = Math.max(0.12, transformRef.current.k * 0.8);
+    const width = canvasRef.current?.width || 1000;
+    const height = canvasRef.current?.height || 750;
+    const { x: tx, y: ty, k: currentK } = transformRef.current;
+    const newK = Math.max(0.003, currentK * 0.75);
+    transformRef.current = {
+      x: width / 2 - (width / 2 - tx) * (newK / currentK),
+      y: height / 2 - (height / 2 - ty) * (newK / currentK),
+      k: newK
+    };
   };
 
-  const handleResetZoom = () => {
-    transformRef.current = { x: 0, y: 0, k: 0.75 };
-  };
-
-  // Hot spot count in current view
-  const currentHotSpotsCount = useMemo(() => {
-    return simNodesRef.current.filter(n => (n.heatScore || 0) >= 0.75).length;
-  }, [simNodesRef.current, isHeatmapActive, selectedPhase]);
-
-  // Audio Control Handlers
-  const handleToggleAudio = async () => {
-    await binauralAudio.toggle();
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVol = parseFloat(e.target.value);
-    binauralAudio.setVolume(newVol);
-  };
-
-  const handleToggleMute = () => {
-    binauralAudio.setMute(!audioState.isMuted);
+  const handleResetDefaults = () => {
+    setPhysicsConfig(DEFAULT_PHYSICS_CONFIG);
+    setOpticsConfig(DEFAULT_OPTICS_CONFIG);
+    fitGraphToViewport(450);
   };
 
   return (
-    <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-[#070711]">
+    <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-[#14181d]">
       <canvas
         ref={canvasRef}
         className="w-full h-full cursor-grab active:cursor-grabbing block"
@@ -915,189 +926,152 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
         onWheel={handleWheel}
       />
 
-      {/* TOP-LEFT FLOATING CONTROLS: THEMATIC HEATMAP & BINAURAL AUDIO HUD */}
-      <div className="absolute top-4 left-4 z-20 flex flex-col gap-2 max-w-xl">
-        {/* Row 1: Primary Heatmap & Binaural Audio Master Controls */}
-        <div className="flex flex-wrap items-center gap-2 bg-[#11112a]/90 backdrop-blur-md px-3 py-2 rounded-2xl border border-indigo-500/35 shadow-2xl">
+      {/* TOP-RIGHT CONTROLS: [🔥 HEATMAP] AND [⚙️ PHYSICS & OPTICS] CONTROL DECK */}
+      <div className="absolute top-3 right-3 z-20 flex flex-col items-end gap-2 pointer-events-auto">
+        <div className="flex items-center gap-2 bg-[#1c2128]/90 backdrop-blur-2xl px-2.5 py-1.5 rounded-2xl border border-white/15 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_12px_32px_rgba(0,0,0,0.55)]">
           {/* Heatmap Toggle */}
           <button
             onClick={() => setIsHeatmapActive(!isHeatmapActive)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow ${
+            className={`px-2.5 py-1 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow ${
               isHeatmapActive
-                ? 'bg-gradient-to-r from-rose-600 via-amber-600 to-rose-600 text-white border border-rose-400/50 shadow-rose-900/40 animate-pulse'
-                : 'bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-500/30'
+                ? 'bg-gradient-to-r from-amber-600 to-rose-600 text-white border border-amber-400/50 shadow-amber-900/40 animate-pulse'
+                : 'bg-[#242a33]/85 hover:bg-[#2e3642] text-slate-200 border border-white/10'
             }`}
             title="Toggle Thematic Step Activity Heat-Mapping Layer"
           >
             <span>🔥</span>
-            <span>{isHeatmapActive ? 'Thematic Heatmap [ACTIVE]' : 'Thematic Heatmap'}</span>
+            <span>{isHeatmapActive ? 'Heatmap [ON]' : 'Heatmap'}</span>
           </button>
 
           {isHeatmapActive && (
-            <div className="flex items-center gap-2 pl-2 border-l border-indigo-500/30 text-xs">
-              <span className="text-[11px] font-mono text-rose-300">
-                {currentHotSpotsCount} Hot Spots Detected
-              </span>
-            </div>
+            <span className="text-[11px] font-mono text-amber-300 pr-1 border-r border-white/10">
+              {hotSpotCount} Hot
+            </span>
           )}
 
-          {/* Divider between visual and acoustic HUD */}
-          <div className="h-4 w-px bg-indigo-500/30 hidden sm:block" />
-
-          {/* Binaural Audio Engine Master Toggle */}
+          {/* Physics & Optics Deck Toggle */}
           <button
-            onClick={handleToggleAudio}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow ${
-              audioState.isActive && !audioState.isMuted
-                ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white border border-cyan-400/50 shadow-cyan-900/40 animate-pulse'
-                : 'bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-500/30'
+            onClick={() => setIsPhysicsPanelOpen(!isPhysicsPanelOpen)}
+            className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow ${
+              isPhysicsPanelOpen
+                ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white border border-cyan-400/50 shadow-cyan-900/40'
+                : 'bg-[#242a33]/85 hover:bg-[#2e3642] text-slate-200 border border-white/10'
             }`}
-            title="Toggle Subtle Binaural Resonance Audio Engine"
+            title="Toggle Physics and Optics Real-Time Control Deck"
           >
-            <span>{audioState.isActive && !audioState.isMuted ? '🔊' : '🔇'}</span>
-            <span>{audioState.isActive ? 'Binaural Tone [ON]' : 'Binaural Tone'}</span>
+            <span>⚙️</span>
+            <span>Physics & Optics</span>
           </button>
-
-          {/* Volume Slider & Mute Toggle (Shown when Audio is Initialized) */}
-          {audioState.isActive && (
-            <div className="flex items-center gap-1.5 pl-1.5 border-l border-indigo-500/30">
-              <button
-                onClick={handleToggleMute}
-                className="text-xs text-gray-300 hover:text-white transition px-1"
-                title={audioState.isMuted ? 'Unmute Tone' : 'Mute Tone'}
-              >
-                {audioState.isMuted ? '🔇' : '🔉'}
-              </button>
-              <input
-                type="range"
-                min="0.0"
-                max="1.0"
-                step="0.05"
-                value={audioState.volume}
-                onChange={handleVolumeChange}
-                className="w-16 h-1.5 bg-indigo-950 rounded-lg appearance-none cursor-pointer accent-cyan-400"
-                title={`Volume: ${Math.round(audioState.volume * 100)}%`}
-              />
-              <span className="text-[10px] font-mono text-cyan-300 tabular-nums w-7">
-                {Math.round(audioState.volume * 100)}%
-              </span>
-            </div>
-          )}
         </div>
 
-        {/* Audio Telemetry Chip (Shown when Audio is Active) */}
-        {audioState.isActive && (
-          <div className="bg-[#0e0e24]/90 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-cyan-500/30 shadow-xl flex items-center justify-between gap-3 text-[11px]">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-              <span className="text-gray-300">
-                Resonance: <strong className="text-cyan-300 font-mono tabular-nums">{audioState.carrierFrequency.toFixed(1)} Hz</strong> Carrier
-              </span>
-              <span className="text-gray-500">·</span>
-              <span className="text-amber-300 font-mono tabular-nums">
-                Δ {audioState.beatFrequency.toFixed(1)} Hz ({audioState.brainwaveBand} Beat)
-              </span>
-            </div>
-            {audioState.activeNodeLabel && (
-              <span className="text-[10px] font-mono text-purple-300 truncate max-w-[180px]">
-                Target: {audioState.activeNodeLabel}
-              </span>
+        {/* Collapsible Physics & Visual Optics Control Panel */}
+        {isPhysicsPanelOpen && (
+          <PhysicsOpticsPanel
+            physics={physicsConfig}
+            optics={opticsConfig}
+            onUpdatePhysics={setPhysicsConfig}
+            onUpdateOptics={setOpticsConfig}
+            onResetDefaults={handleResetDefaults}
+            onClose={() => setIsPhysicsPanelOpen(false)}
+          />
+        )}
+      </div>
+
+      {/* TOP-LEFT HUD: HEATMAP PHASE SELECTOR & LEGEND (CLEAN & MINIMAL, NO AUDIO BLOAT) */}
+      {isHeatmapActive && (
+        <div className="absolute top-3 left-3 z-20 flex flex-col gap-1.5 max-w-md pointer-events-auto animate-in fade-in duration-150">
+          {/* Heatmap Phase Selector Tabs */}
+          <div className="bg-[#1c2128]/85 backdrop-blur-2xl p-1 rounded-xl border border-white/12 shadow-2xl flex flex-wrap gap-1 text-[11px]">
+            {(['ALL', 'PHASE_I', 'PHASE_II', 'PHASE_III', 'PHASE_IV', 'PHASE_V'] as OntologicalPhaseKey[]).map(
+              phaseKey => {
+                const isSelected = selectedPhase === phaseKey;
+                const shortNames: Record<OntologicalPhaseKey, string> = {
+                  ALL: 'All Phases',
+                  PHASE_I: 'Phase I',
+                  PHASE_II: 'Phase II',
+                  PHASE_III: 'Phase III',
+                  PHASE_IV: 'Phase IV',
+                  PHASE_V: 'Phase V'
+                };
+                return (
+                  <button
+                    key={phaseKey}
+                    onClick={() => setSelectedPhase(phaseKey)}
+                    className={`px-2 py-0.5 rounded-lg transition font-medium ${
+                      isSelected
+                        ? 'bg-gradient-to-b from-[#3a4250] to-[#282e38] text-white border border-slate-300/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_2px_8px_rgba(0,0,0,0.4)]'
+                        : 'bg-[#242a33]/60 hover:bg-[#2e3642] text-slate-300'
+                    }`}
+                  >
+                    {shortNames[phaseKey]}
+                  </button>
+                );
+              }
             )}
           </div>
-        )}
 
-        {/* Phase Filter Selector (Shown when Heatmap is Active) */}
-        {isHeatmapActive && (
-          <div className="flex flex-wrap items-center gap-1 bg-[#0e0e24]/95 backdrop-blur-md p-2 rounded-2xl border border-rose-500/30 shadow-2xl text-xs">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 px-2">
-              Ontological Phase:
-            </span>
-            {[
-              { id: 'ALL', label: 'All 22 Steps' },
-              { id: 'PHASE_I', label: 'Phase I: Diagnosis' },
-              { id: 'PHASE_II', label: 'Phase II: Anthropology' },
-              { id: 'PHASE_III', label: 'Phase III: Purgation' },
-              { id: 'PHASE_IV', label: 'Phase IV: Disclosure' },
-              { id: 'PHASE_V', label: 'Phase V: Reconception' }
-            ].map(phase => (
-              <button
-                key={phase.id}
-                onClick={() => setSelectedPhase(phase.id as OntologicalPhaseKey)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
-                  selectedPhase === phase.id
-                    ? 'bg-gradient-to-r from-rose-600 to-amber-600 text-white shadow'
-                    : 'bg-indigo-950/60 hover:bg-indigo-900/60 text-gray-300'
-                }`}
-              >
-                {phase.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Heatmap Legend Bar (Shown when Heatmap is Active) */}
-        {isHeatmapActive && (
-          <div className="bg-[#0e0e24]/90 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-indigo-500/30 shadow-2xl flex items-center justify-between gap-3 text-[11px]">
-            <span className="text-gray-400 font-medium">Thermal Spectrum:</span>
+          {/* Heatmap Legend Bar */}
+          <div className="bg-[#1c2128]/85 backdrop-blur-2xl px-3 py-1.5 rounded-xl border border-white/12 shadow-2xl flex items-center justify-between gap-3 text-[11px]">
+            <span className="text-slate-400 font-medium">Spectrum:</span>
             <div className="flex items-center gap-1.5 flex-1 max-w-xs">
-              <span className="text-[10px] text-indigo-400 font-mono">Cold</span>
+              <span className="text-[10px] text-slate-400 font-mono">Cold</span>
               <div
-                className="h-2.5 flex-1 rounded-full shadow-inner"
+                className="h-2 flex-1 rounded-full shadow-inner"
                 style={{
-                  background: 'linear-gradient(to right, #312e81, #06b6d4, #10b981, #f59e0b, #f43f5e, #fff0a8)'
+                  background: 'linear-gradient(to right, #334155, #38bdf8, #34d399, #f59e0b, #f43f5e, #fff0a8)'
                 }}
               />
               <span className="text-[10px] text-amber-300 font-mono font-bold">Hot Spot</span>
             </div>
-            <div className="text-[10px] font-mono text-gray-300 hidden sm:block">
+            <div className="text-[10px] font-mono text-slate-300 hidden sm:block">
               Peak: <span className="text-amber-300 font-semibold">{phaseNexusSummary[selectedPhase].nexusStep}</span>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Floating Canvas Viewport Controls */}
-      <div className="absolute bottom-5 right-5 flex flex-col gap-2 bg-[#11112a]/85 backdrop-blur-md p-1.5 rounded-xl border border-indigo-500/30 shadow-2xl z-20">
+      {/* FLOATING VIEWPORT ZOOM CONTROLS (BOTTOM-RIGHT) WITH TRUE BOUNDING-BOX FIT */}
+      <div className="absolute bottom-4 right-4 flex flex-col gap-1.5 bg-[#1c2128]/85 backdrop-blur-2xl p-1.5 rounded-xl border border-white/12 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_12px_32px_rgba(0,0,0,0.55)] z-20">
         <button
           onClick={handleZoomIn}
-          className="w-8 h-8 rounded-lg bg-indigo-950/70 hover:bg-indigo-600/40 text-indigo-200 text-sm font-bold flex items-center justify-center transition border border-indigo-400/20"
+          className="w-7 h-7 rounded-lg bg-[#242a33]/85 hover:bg-[#2e3642] text-slate-200 text-sm font-bold flex items-center justify-center transition border border-white/10"
           title="Zoom In"
         >
           +
         </button>
         <button
           onClick={handleZoomOut}
-          className="w-8 h-8 rounded-lg bg-indigo-950/70 hover:bg-indigo-600/40 text-indigo-200 text-sm font-bold flex items-center justify-center transition border border-indigo-400/20"
+          className="w-7 h-7 rounded-lg bg-[#242a33]/85 hover:bg-[#2e3642] text-slate-200 text-sm font-bold flex items-center justify-center transition border border-white/10"
           title="Zoom Out"
         >
           –
         </button>
         <button
-          onClick={handleResetZoom}
-          className="w-8 h-8 rounded-lg bg-indigo-950/70 hover:bg-indigo-600/40 text-indigo-200 text-xs font-semibold flex items-center justify-center transition border border-indigo-400/20"
-          title="Reset View"
+          onClick={() => fitGraphToViewport(450)}
+          className="w-7 h-7 rounded-lg bg-[#242a33]/85 hover:bg-[#2e3642] text-amber-300 text-xs font-semibold flex items-center justify-center transition border border-white/10"
+          title="⊙ Fit Graph (True Bounding-Box Auto-Fit)"
         >
           ⊙
         </button>
       </div>
 
-      {/* Hover Tooltip with Thematic Heatmap Inspector */}
-      {hoveredNode && (
-        <div className="absolute bottom-5 left-5 max-w-sm pointer-events-none bg-[#11112a]/95 backdrop-blur-md p-3.5 rounded-xl border border-indigo-500/40 shadow-2xl text-xs space-y-1.5 z-20">
-          <div className="font-semibold text-indigo-200 flex items-center justify-between gap-2">
-            <span>{hoveredNode.label}</span>
-            <span className="px-1.5 py-0.5 rounded bg-indigo-900/60 text-[10px] uppercase tracking-wider text-indigo-300">
+      {/* UNIFIED BOTTOM-LEFT DOCK: INSPECTION CARD OR TELEMETRY PILL */}
+      {hoveredNode ? (
+        <div className="absolute bottom-4 left-4 max-w-sm pointer-events-none bg-[#1c2128]/95 backdrop-blur-2xl p-3.5 rounded-xl border border-white/15 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.15),0_16px_36px_rgba(0,0,0,0.65)] text-xs space-y-1.5 z-20">
+          <div className="font-semibold text-slate-100 flex items-center justify-between gap-2">
+            <span className="truncate">{hoveredNode.label}</span>
+            <span className="px-1.5 py-0.5 rounded bg-[#242a33] text-[10px] uppercase tracking-wider text-amber-300 border border-white/10">
               {hoveredNode.type}
             </span>
           </div>
 
           {/* Heatmap Layer Specific Metrics */}
           {isHeatmapActive && (
-            <div className="p-2 rounded-lg bg-black/50 border border-rose-500/30 space-y-1">
+            <div className="p-2 rounded-lg bg-[#14181d]/80 border border-amber-500/30 space-y-1">
               <div className="flex items-center justify-between text-[11px]">
-                <span className="text-gray-300 font-semibold flex items-center gap-1">
+                <span className="text-slate-300 font-semibold flex items-center gap-1">
                   <span>🔥</span>
-                  <span>Thematic Heat Activity:</span>
+                  <span>Heat Activity:</span>
                 </span>
                 <span
                   className="font-mono font-bold px-1.5 py-0.2 rounded"
@@ -1110,43 +1084,56 @@ export const GraphCanvas: React.FC<GraphCanvasProps> = ({
                   {(hoveredNode.heatScore || 0) >= 0.75 ? ' (HOT SPOT)' : ''}
                 </span>
               </div>
-              <div className="text-[10px] text-gray-400">
-                Phase Nexus: <span className="text-indigo-300">{hoveredNode.heatPhase}</span>
+              <div className="text-[10px] text-slate-400">
+                Phase Nexus: <span className="text-slate-200">{hoveredNode.heatPhase}</span>
               </div>
               {hoveredNode.heatDetails?.activeSteps && hoveredNode.heatDetails.activeSteps.length > 0 && (
-                <div className="text-[10px] text-gray-400 truncate">
-                  Active Steps: <span className="text-rose-300 font-mono">{hoveredNode.heatDetails.activeSteps.join(', ')}</span>
+                <div className="text-[10px] text-slate-400 truncate">
+                  Steps: <span className="text-amber-300 font-mono">{hoveredNode.heatDetails.activeSteps.join(', ')}</span>
                   {hoveredNode.heatDetails.figureCount > 0 && (
-                    <span> • {hoveredNode.heatDetails.figureCount} intersecting thinker citations</span>
+                    <span> • {hoveredNode.heatDetails.figureCount} thinkers</span>
                   )}
                 </div>
               )}
             </div>
           )}
 
-          {/* Binaural Frequency Coupling Preview */}
-          {audioState.isActive && (
-            <div className="p-1.5 rounded-lg bg-indigo-950/60 border border-cyan-500/20 text-[10px] text-cyan-300 flex items-center justify-between font-mono">
-              <span>Binaural Coupling:</span>
-              <span>
-                {Math.round(108 + (hoveredNode.heatScore || 0.05) * 108)} Hz / Δ{' '}
-                {(1.5 + Math.pow(hoveredNode.heatScore || 0.05, 1.8) * 4.5).toFixed(1)} Hz
-              </span>
-            </div>
-          )}
-
           {hoveredNode.stratum && (
-            <div className="text-[11px] font-mono text-purple-300">
+            <div className="text-[11px] font-mono text-teal-300">
               Stratum: {hoveredNode.stratum}
             </div>
           )}
-          <div className="text-gray-400">
+          <div className="text-slate-400">
             Level {hoveredNode.level} {hoveredNode.count ? `• ${hoveredNode.count} subtopics` : ''}
           </div>
           {hoveredNode.provenance?.sourceFile && (
             <div className="text-emerald-400 text-[11px] truncate">
               Source: {hoveredNode.provenance.sourceFile}
             </div>
+          )}
+        </div>
+      ) : (
+        /* Default Physics Telemetry Pill (Sits cleanly in bottom-left without collisions) */
+        <div className="absolute bottom-4 left-4 pointer-events-none bg-[#1c2128]/85 backdrop-blur-2xl px-3 py-1.5 rounded-xl border border-white/12 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_12px_32px_rgba(0,0,0,0.55)] text-[11px] font-mono text-slate-300 flex items-center gap-2 z-10">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-slate-100 font-semibold">
+            {simNodesRef.current.length.toLocaleString()} active in physics
+          </span>
+          <span className="text-slate-600">•</span>
+          <span className="capitalize text-amber-300 font-bold">{densityMode} governor</span>
+          <span className="text-slate-600">•</span>
+          <span className="text-emerald-300 font-medium">60 FPS Culled</span>
+          {physicsConfig.isFrozen && (
+            <>
+              <span className="text-slate-600">•</span>
+              <span className="text-amber-300 font-bold">⏸ Frozen</span>
+            </>
+          )}
+          {highlightedPath && (
+            <>
+              <span className="text-slate-600">•</span>
+              <span className="text-sky-300">⚡ Path: {highlightedPath.pathNodes.length} nodes</span>
+            </>
           )}
         </div>
       )}

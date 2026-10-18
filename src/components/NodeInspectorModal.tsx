@@ -1,5 +1,5 @@
 // src/components/NodeInspectorModal.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { GraphNode, GraphEdge } from '../types/graph';
 
 interface NodeInspectorModalProps {
@@ -19,75 +19,98 @@ export const NodeInspectorModal: React.FC<NodeInspectorModalProps> = ({
 }) => {
   if (!node) return null;
 
-  // Find connected neighbors
-  const connectedEdges = edges.filter(e => e.source === node.id || e.target === node.id);
-  const parentNode = node.parentId ? nodesMap.get(node.parentId) : null;
-  const childNodes = edges
-    .filter(e => e.source === node.id && e.type === 'hierarchical')
-    .map(e => nodesMap.get(e.target))
-    .filter((n): n is GraphNode => Boolean(n));
+  // Find parent node
+  const parentNode = useMemo(() => {
+    if (!node.parentId) return null;
+    return nodesMap.get(node.parentId) || null;
+  }, [node.parentId, nodesMap]);
 
-  const semanticNeighbors = connectedEdges
-    .filter(e => e.type !== 'hierarchical')
-    .map(e => {
-      const neighborId = e.source === node.id ? e.target : e.source;
-      return {
-        neighbor: nodesMap.get(neighborId),
-        edgeLabel: e.label,
-        direction: e.source === node.id ? 'outgoing' : 'incoming'
-      };
-    })
-    .filter(item => Boolean(item.neighbor));
+  // Find child subtopics
+  const childNodes = useMemo(() => {
+    const list: GraphNode[] = [];
+    nodesMap.forEach(n => {
+      if (n.parentId === node.id) {
+        list.push(n);
+      }
+    });
+    return list;
+  }, [node.id, nodesMap]);
+
+  // Find connected semantic cross-cut links
+  const connectedEdges = useMemo(() => {
+    return edges.filter(e => {
+      const sId = typeof e.source === 'object' && e.source !== null ? (e.source as { id: string }).id : String(e.source);
+      const tId = typeof e.target === 'object' && e.target !== null ? (e.target as { id: string }).id : String(e.target);
+      return sId === node.id || tId === node.id;
+    });
+  }, [edges, node.id]);
+
+  const semanticNeighbors = useMemo(() => {
+    return connectedEdges
+      .map(edge => {
+        const sId = typeof edge.source === 'object' && edge.source !== null ? (edge.source as { id: string }).id : String(edge.source);
+        const tId = typeof edge.target === 'object' && edge.target !== null ? (edge.target as { id: string }).id : String(edge.target);
+        const isSource = sId === node.id;
+        const targetId = isSource ? tId : sId;
+        const neighbor = nodesMap.get(targetId);
+        return {
+          neighbor,
+          edgeLabel: edge.label,
+          direction: isSource ? 'outgoing' : 'incoming'
+        };
+      })
+      .filter(item => Boolean(item.neighbor));
+  }, [connectedEdges, node.id, nodesMap]);
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-full sm:w-96 bg-[#11112a]/95 backdrop-blur-xl border-l border-indigo-500/30 shadow-2xl flex flex-col">
+    <div className="fixed inset-y-0 right-0 z-40 w-full sm:w-96 bg-[#1c2128]/95 backdrop-blur-2xl border-l border-white/12 shadow-2xl flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-indigo-500/20 bg-indigo-950/40 flex items-center justify-between">
+      <div className="p-4 border-b border-white/10 bg-[#14181d]/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: node.color || '#6366f1' }} />
-          <span className="text-xs uppercase font-bold tracking-wider text-indigo-300">
+          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: node.color || '#e5c158' }} />
+          <span className="text-xs uppercase font-bold tracking-wider text-amber-300">
             Node Inspector
           </span>
         </div>
         <button
           onClick={onClose}
-          className="w-7 h-7 rounded-full bg-indigo-900/40 hover:bg-indigo-800 text-indigo-300 flex items-center justify-center transition text-xs"
+          className="w-7 h-7 rounded-full bg-[#242a33] hover:bg-[#2e3642] text-slate-300 hover:text-white flex items-center justify-center border border-white/10 transition text-xs"
         >
           ✕
         </button>
       </div>
 
       {/* Content */}
-      <div className="p-5 flex-1 overflow-y-auto space-y-5 text-xs text-indigo-100">
+      <div className="p-5 flex-1 overflow-y-auto space-y-5 text-xs text-slate-200">
         {/* Title */}
         <div>
           <h3 className="text-base font-bold text-white break-words">
             {node.label}
           </h3>
           <div className="flex flex-wrap gap-2 mt-2">
-            <span className="px-2 py-0.5 rounded-full bg-indigo-900/60 text-indigo-300 text-[10px] font-semibold uppercase">
+            <span className="px-2 py-0.5 rounded-full bg-[#242a33] text-amber-300 border border-white/10 text-[10px] font-semibold uppercase">
               {node.type}
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-indigo-900/40 text-gray-300 text-[10px]">
+            <span className="px-2 py-0.5 rounded-full bg-[#242a33] text-slate-300 border border-white/10 text-[10px]">
               Level {node.level}
             </span>
             {node.count !== undefined && node.count > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-white/10 text-indigo-200 text-[10px]">
+              <span className="px-2 py-0.5 rounded-full bg-white/10 text-slate-200 text-[10px] font-mono">
                 {node.count} subtopics
               </span>
             )}
             {node.stratum && (
-              <span className="px-2 py-0.5 rounded-full bg-purple-950 text-purple-300 text-[10px] font-mono border border-purple-500/30">
+              <span className="px-2 py-0.5 rounded-full bg-[#14181d] text-teal-300 text-[10px] font-mono border border-teal-500/30">
                 {node.stratum}
               </span>
             )}
             {node.stance && (
-              <span className="px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 text-[10px] font-mono border border-blue-500/30">
+              <span className="px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 text-[10px] font-mono border border-sky-500/30">
                 Stance: {node.stance}
               </span>
             )}
             {node.nothingnessSense && (
-              <span className="px-2 py-0.5 rounded-full bg-slate-900 text-slate-200 text-[10px] font-mono border border-slate-700">
+              <span className="px-2 py-0.5 rounded-full bg-[#14181d] text-slate-200 text-[10px] font-mono border border-white/10">
                 {node.nothingnessSense}
               </span>
             )}
@@ -101,17 +124,17 @@ export const NodeInspectorModal: React.FC<NodeInspectorModalProps> = ({
 
         {/* ROAE 2.0 Epistemic Classification & Warrant */}
         {node.roaeProvenance && (
-          <div className="p-3.5 rounded-xl bg-purple-950/30 border border-purple-500/30 space-y-1.5">
-            <div className="font-semibold text-purple-300 flex items-center justify-between">
+          <div className="p-3.5 rounded-xl bg-[#14181d]/80 border border-teal-500/30 space-y-1.5">
+            <div className="font-semibold text-teal-300 flex items-center justify-between">
               <span>⚖️ ROAE 2.0 Invariant Audit</span>
-              <span className="text-[10px] font-mono text-purple-400">{node.roaeProvenance.engineVersion}</span>
+              <span className="text-[10px] font-mono text-slate-400">{node.roaeProvenance.engineVersion}</span>
             </div>
             {node.roaeProvenance.warrant && (
-              <div className="text-[11px] text-gray-200 bg-black/40 p-2 rounded border border-purple-500/20 font-serif">
-                <span className="text-purple-400 font-sans font-semibold">Epistemic Warrant:</span> {node.roaeProvenance.warrant}
+              <div className="text-[11px] text-slate-200 bg-[#1c2128] p-2 rounded border border-white/10 font-serif">
+                <span className="text-teal-300 font-sans font-semibold">Epistemic Warrant:</span> {node.roaeProvenance.warrant}
               </div>
             )}
-            <div className="text-[10px] text-gray-400 font-mono">
+            <div className="text-[10px] text-slate-400 font-mono">
               Diff ID: {node.roaeProvenance.diffId} • Run: {node.roaeProvenance.runId}
             </div>
           </div>
@@ -119,28 +142,28 @@ export const NodeInspectorModal: React.FC<NodeInspectorModalProps> = ({
 
         {/* Provenance Metadata */}
         {node.provenance && (
-          <div className="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 space-y-2">
-            <div className="font-semibold text-indigo-300 flex items-center gap-1.5">
+          <div className="p-3.5 rounded-xl bg-[#14181d]/80 border border-white/10 space-y-2">
+            <div className="font-semibold text-amber-300 flex items-center gap-1.5">
               <span>📄 Source Provenance</span>
             </div>
             {node.provenance.sourceFile && (
               <div className="text-[11px]">
-                <span className="text-gray-400">File: </span>
+                <span className="text-slate-400">File: </span>
                 <span className="text-emerald-300 font-medium">{node.provenance.sourceFile}</span>
               </div>
             )}
             {node.provenance.fileHash && (
-              <div className="text-[10px] text-gray-400 font-mono truncate" title={node.provenance.fileHash}>
+              <div className="text-[10px] text-slate-400 font-mono truncate" title={node.provenance.fileHash}>
                 Hash: {node.provenance.fileHash}
               </div>
             )}
             {node.provenance.extractedAt && (
-              <div className="text-[10px] text-gray-400">
+              <div className="text-[10px] text-slate-400">
                 Time: {new Date(node.provenance.extractedAt).toLocaleString()}
               </div>
             )}
             {node.provenance.snippet && (
-              <div className="p-2 rounded bg-black/40 text-gray-300 text-[11px] italic font-serif">
+              <div className="p-2 rounded bg-[#1c2128] text-slate-300 text-[11px] italic font-serif border border-white/10">
                 "{node.provenance.snippet}"
               </div>
             )}
@@ -150,12 +173,12 @@ export const NodeInspectorModal: React.FC<NodeInspectorModalProps> = ({
         {/* Parent Node */}
         {parentNode && (
           <div className="space-y-1.5">
-            <div className="font-semibold text-gray-400 text-[11px]">Parent Concept:</div>
+            <div className="font-semibold text-slate-400 text-[11px]">Parent Concept:</div>
             <button
               onClick={() => onSelectNode(parentNode)}
-              className="w-full text-left p-2 rounded-lg bg-[#16162e] hover:bg-indigo-900/40 border border-indigo-500/20 text-indigo-200 truncate transition flex items-center gap-2"
+              className="w-full text-left p-2 rounded-lg bg-[#14181d]/80 hover:bg-[#242a33] border border-white/10 text-slate-200 truncate transition flex items-center gap-2"
             >
-              <span className="text-indigo-400">↖</span>
+              <span className="text-amber-300">↖</span>
               <span className="truncate">{parentNode.label}</span>
             </button>
           </div>
@@ -164,7 +187,7 @@ export const NodeInspectorModal: React.FC<NodeInspectorModalProps> = ({
         {/* Children Subtopics */}
         {childNodes.length > 0 && (
           <div className="space-y-1.5">
-            <div className="font-semibold text-gray-400 text-[11px] flex items-center justify-between">
+            <div className="font-semibold text-slate-400 text-[11px] flex items-center justify-between">
               <span>Subtopics & Children ({childNodes.length})</span>
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
@@ -172,9 +195,9 @@ export const NodeInspectorModal: React.FC<NodeInspectorModalProps> = ({
                 <button
                   key={child.id}
                   onClick={() => onSelectNode(child)}
-                  className="w-full text-left p-2 rounded-lg bg-[#16162e] hover:bg-indigo-900/40 border border-indigo-500/20 text-indigo-200 truncate transition flex items-center gap-2 text-[11px]"
+                  className="w-full text-left p-2 rounded-lg bg-[#14181d]/80 hover:bg-[#242a33] border border-white/10 text-slate-200 truncate transition flex items-center gap-2 text-[11px]"
                 >
-                  <span className="text-indigo-400">↘</span>
+                  <span className="text-sky-300">↘</span>
                   <span className="truncate">{child.label}</span>
                 </button>
               ))}
@@ -185,7 +208,7 @@ export const NodeInspectorModal: React.FC<NodeInspectorModalProps> = ({
         {/* Semantic Cross-Cut Links */}
         {semanticNeighbors.length > 0 && (
           <div className="space-y-1.5">
-            <div className="font-semibold text-gray-400 text-[11px]">
+            <div className="font-semibold text-slate-400 text-[11px]">
               Semantic Cross-Cuts & Relations ({semanticNeighbors.length})
             </div>
             <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
@@ -193,10 +216,10 @@ export const NodeInspectorModal: React.FC<NodeInspectorModalProps> = ({
                 <button
                   key={idx}
                   onClick={() => neighbor && onSelectNode(neighbor)}
-                  className="w-full text-left p-2 rounded-lg bg-[#16162e] hover:bg-indigo-900/40 border border-cyan-500/20 text-indigo-200 truncate transition flex items-center justify-between gap-2 text-[11px]"
+                  className="w-full text-left p-2 rounded-lg bg-[#14181d]/80 hover:bg-[#242a33] border border-white/10 text-slate-200 truncate transition flex items-center justify-between gap-2 text-[11px]"
                 >
                   <span className="truncate">{neighbor?.label}</span>
-                  <span className="text-[10px] text-cyan-400 uppercase font-mono shrink-0">
+                  <span className="text-[10px] text-sky-400 uppercase font-mono shrink-0">
                     {edgeLabel || direction}
                   </span>
                 </button>

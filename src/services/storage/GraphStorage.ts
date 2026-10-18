@@ -2,6 +2,8 @@
 import canonicalData from '../../data/canonicalGraph.json';
 import { GraphNode, GraphEdge, IngestedDocumentRecord, GraphStorageSchema } from '../../types/graph';
 import { CandidateGraphDiff, ResidueItem, FormalContradiction, NegativeKnowledgeItem, VoidOperatorExperiment } from '../../types/roae';
+import { persistGraphSchemaToIDB, getGraphSchemaFromIDB, clearGraphSchemaFromIDB } from './IndexedDBStorage';
+import { graphIndex } from './GraphIndex';
 
 const STORAGE_KEY = 'nihiltheism_graph_storage_v1';
 
@@ -20,10 +22,22 @@ class GraphStorageService {
   };
 
   private listeners: Array<() => void> = [];
+  private cachedAllNodes: GraphNode[] | null = null;
+  private cachedAllEdges: GraphEdge[] | null = null;
 
   constructor() {
     this.loadFromStorage();
     this.seedDefaultResidueAndNegativeKnowledge();
+    this.rebuildIndex();
+    this.initIndexedDB();
+  }
+
+  public rebuildIndex() {
+    this.cachedAllNodes = null;
+    this.cachedAllEdges = null;
+    const allNodes = this.getAllNodes();
+    const allEdges = this.getAllEdges();
+    graphIndex.buildIndex(allNodes, allEdges);
   }
 
   private loadFromStorage() {
@@ -32,7 +46,7 @@ class GraphStorageService {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed && Array.isArray(parsed.documents)) {
+        if (parsed && !parsed.isIndexedDB && Array.isArray(parsed.documents)) {
           this.schema = {
             version: parsed.version || 2,
             lastUpdated: parsed.lastUpdated || new Date().toISOString(),
@@ -48,7 +62,47 @@ class GraphStorageService {
         }
       }
     } catch (e) {
-      console.error('Failed to load graph persistence state:', e);
+      console.warn('Failed to load graph persistence state from localStorage:', e);
+    }
+  }
+
+  private async initIndexedDB() {
+    if (typeof window === 'undefined') return;
+    try {
+      const idbSchema = await getGraphSchemaFromIDB();
+      if (idbSchema && Array.isArray(idbSchema.documents)) {
+        const inMemoryCount = (this.schema.dynamicNodes?.length || 0) + (this.schema.dynamicEdges?.length || 0);
+        const idbCount = (idbSchema.dynamicNodes?.length || 0) + (idbSchema.dynamicEdges?.length || 0);
+        const idbDocs = idbSchema.documents?.length || 0;
+        const memDocs = this.schema.documents?.length || 0;
+
+        // If IDB has more or newer data, update in-memory schema
+        if (
+          idbCount > inMemoryCount ||
+          idbDocs > memDocs ||
+          (idbSchema.lastUpdated && idbSchema.lastUpdated > this.schema.lastUpdated)
+        ) {
+          this.schema = {
+            version: idbSchema.version || 2,
+            lastUpdated: idbSchema.lastUpdated || new Date().toISOString(),
+            documents: idbSchema.documents || [],
+            dynamicNodes: idbSchema.dynamicNodes || [],
+            dynamicEdges: idbSchema.dynamicEdges || [],
+            candidateDiffs: idbSchema.candidateDiffs || [],
+            residueItems: idbSchema.residueItems?.length ? idbSchema.residueItems : this.schema.residueItems,
+            contradictions: idbSchema.contradictions?.length ? idbSchema.contradictions : this.schema.contradictions,
+            negativeKnowledge: idbSchema.negativeKnowledge?.length ? idbSchema.negativeKnowledge : this.schema.negativeKnowledge,
+            voidExperiments: idbSchema.voidExperiments || []
+          };
+          this.rebuildIndex();
+          this.notifyListeners();
+        }
+      } else if (this.schema.dynamicNodes.length > 0 || this.schema.documents.length > 0) {
+        // Seed IDB with whatever we loaded from localStorage
+        await persistGraphSchemaToIDB(this.schema, true);
+      }
+    } catch (err) {
+      console.warn('[GraphStorage] IndexedDB initialization warning:', err);
     }
   }
 
@@ -119,14 +173,50 @@ class GraphStorageService {
   }
 
   public saveToStorage() {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    try {
-      this.schema.lastUpdated = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.schema));
-      this.notifyListeners();
-    } catch (e) {
-      console.error('Failed to save to localStorage:', e);
+    this.schema.lastUpdated = new Date().toISOString();
+    this.rebuildIndex();
+
+    // 1. Asynchronously persist complete schema to IndexedDB (virtually unlimited quota, zero QuotaExceededError risk)
+    persistGraphSchemaToIDB(this.schema).catch(err => {
+      console.warn('[GraphStorage] IndexedDB async save warning:', err);
+    });
+
+    // 2. Safe synchronous cache in localStorage with graceful quota handling
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const serialized = JSON.stringify(this.schema);
+        // Only mirror to localStorage if serialized size is within conservative 2MB threshold
+        if (serialized.length < 2_000_000) {
+          localStorage.setItem(STORAGE_KEY, serialized);
+        } else {
+          // Payload is large; store lightweight metadata stub so quota is never exceeded
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: this.schema.version,
+            lastUpdated: this.schema.lastUpdated,
+            isIndexedDB: true,
+            docCount: this.schema.documents.length,
+            dynamicNodeCount: this.schema.dynamicNodes.length
+          }));
+        }
+      } catch (e) {
+        // QuotaExceededError caught gracefully without throwing or reporting fatal error
+        console.warn('[GraphStorage] localStorage quota reached; schema safely stored in IndexedDB:', e);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: this.schema.version,
+            lastUpdated: this.schema.lastUpdated,
+            isIndexedDB: true,
+            docCount: this.schema.documents.length,
+            dynamicNodeCount: this.schema.dynamicNodes.length
+          }));
+        } catch {
+          // If localStorage is completely full across origin, IndexedDB is already saved
+        }
+      }
     }
+
+    // 3. Notify all subscribers (App.tsx and active views)
+    this.notifyListeners();
   }
 
   public subscribe(listener: () => void): () => void {
@@ -141,7 +231,7 @@ class GraphStorageService {
       try {
         listener();
       } catch (e) {
-        console.error('Listener notification error:', e);
+        console.warn('Listener notification warning:', e);
       }
     }
   }
@@ -171,6 +261,7 @@ class GraphStorageService {
   }
 
   public getAllNodes(): GraphNode[] {
+    if (this.cachedAllNodes) return this.cachedAllNodes;
     const canonical = this.getCanonicalNodes();
     const dynamic = this.getDynamicNodes();
     const map = new Map<string, GraphNode>();
@@ -181,10 +272,12 @@ class GraphStorageService {
     for (const node of dynamic) {
       map.set(node.id, node);
     }
-    return Array.from(map.values());
+    this.cachedAllNodes = Array.from(map.values());
+    return this.cachedAllNodes;
   }
 
   public getAllEdges(): GraphEdge[] {
+    if (this.cachedAllEdges) return this.cachedAllEdges;
     const canonical = this.getCanonicalEdges();
     const dynamic = this.getDynamicEdges();
     const map = new Map<string, GraphEdge>();
@@ -195,7 +288,32 @@ class GraphStorageService {
     for (const edge of dynamic) {
       map.set(edge.id, edge);
     }
-    return Array.from(map.values());
+    this.cachedAllEdges = Array.from(map.values());
+    return this.cachedAllEdges;
+  }
+
+  public getNodeById(id: string): GraphNode | undefined {
+    return graphIndex.nodeById.get(id);
+  }
+
+  public getNeighbors(id: string, hops: 1 | 2 = 1): Set<string> {
+    return graphIndex.getNeighborhood(id, hops);
+  }
+
+  public getEdgesForNode(id: string): GraphEdge[] {
+    return graphIndex.edgesByNode.get(id) || [];
+  }
+
+  public getCategoryNodeIds(category: string): string[] {
+    return graphIndex.categoryBuckets.get(category) || [];
+  }
+
+  public searchNodeIds(query: string, max = 500): string[] {
+    return graphIndex.searchNodes(query, max);
+  }
+
+  public getIndex(): typeof graphIndex {
+    return graphIndex;
   }
 
   public addIngestedDocument(
@@ -408,6 +526,23 @@ class GraphStorageService {
     this.saveToStorage();
   }
 
+  public pruneDynamicOrphans(): number {
+    const orphanIds = new Set(graphIndex.getPrunableOrphanIds());
+    if (orphanIds.size === 0) return 0;
+
+    const initialCount = this.schema.dynamicNodes.length;
+    this.schema.dynamicNodes = this.schema.dynamicNodes.filter(n => !orphanIds.has(n.id));
+    this.schema.dynamicEdges = this.schema.dynamicEdges.filter(e => {
+      const sId = typeof e.source === 'object' && e.source !== null ? (e.source as { id: string }).id : String(e.source);
+      const tId = typeof e.target === 'object' && e.target !== null ? (e.target as { id: string }).id : String(e.target);
+      return !orphanIds.has(sId) && !orphanIds.has(tId);
+    });
+
+    const prunedCount = initialCount - this.schema.dynamicNodes.length;
+    this.saveToStorage();
+    return prunedCount;
+  }
+
   public clearDynamicData() {
     this.schema = {
       version: 2,
@@ -422,6 +557,16 @@ class GraphStorageService {
       voidExperiments: []
     };
     this.seedDefaultResidueAndNegativeKnowledge();
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // ignore
+      }
+    }
+    clearGraphSchemaFromIDB().catch(err => {
+      console.warn('[GraphStorage] Failed to clear IndexedDB:', err);
+    });
     this.saveToStorage();
   }
 }

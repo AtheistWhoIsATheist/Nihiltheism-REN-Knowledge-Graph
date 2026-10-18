@@ -1,8 +1,7 @@
 // src/components/RoaeWorkspaceModal.tsx
 import React, { useState } from 'react';
-import { ResearchContract, CandidateGraphDiff } from '../types/roae';
 import { executeRoaeAnalysis } from '../services/roae/RoaeClient';
-import { graphStorage } from '../services/storage/GraphStorage';
+import { CandidateGraphDiff } from '../types/roae';
 
 interface RoaeWorkspaceModalProps {
   isOpen: boolean;
@@ -15,93 +14,84 @@ export const RoaeWorkspaceModal: React.FC<RoaeWorkspaceModalProps> = ({
   onClose,
   onDiffGenerated
 }) => {
-  const [targetText, setTargetText] = useState(
-    'Pseudo-Dionysius & Cioran: The Dialectic of Divine Darkness and Radical Groundlessness'
-  );
-  const [textContent, setTextContent] = useState(
-    `In the Mystical Theology, Pseudo-Dionysius insists that the transcendent cause of all things is "neither soul nor intellect; nor has it imagination, opinion, or reason... it is beyond all assertion and denial." This radical apophasis mirrors E.M. Cioran\'s existential revelation in On the Heights of Despair: "I have no arguments, only tears, screams, and silence before the absolute void." Does this convergence point to an ontological presence exceeding thought, or to a neurological cessation of language in the face of groundless trauma?`
-  );
+  const [targetText, setTargetText] = useState('Martin Heidegger (Being and Time §40: Anxiety & Nothingness)');
   const [primaryQuestions, setPrimaryQuestions] = useState(
-    '1. Does experiential silence (L2) provide evidential warrant for transcendent groundlessness (L5)?\n2. How do naturalistic and apophatic models symmetrically explain the cessation of intentional grasp?'
+    'How does Angst reveal the Nothing (das Nichts)? Does existential anxiety collapse ontological categories into phenomenological groundlessness?'
   );
   const [excludedNonGoals, setExcludedNonGoals] = useState(
-    'Do not manufacture synthetic theological harmony. Do not smuggle teleological purpose into phenomenological reports.'
+    'Psychological therapy, theological salvation, dogmatic comfort'
   );
-  const [maxNodes, setMaxNodes] = useState(5);
-  const [maxEdges, setMaxEdges] = useState(6);
+  const [maxNodes, setMaxNodes] = useState(6);
+  const [maxEdges, setMaxEdges] = useState(8);
+  const [textContent, setTextContent] = useState(
+    'That in the face of which one has anxiety is Being-in-the-world as such. That which anxiety is anxious about is completely indeterminate. This indeterminacy not only describes that nothing in the world is ready-to-hand, but signifies that the world as such is all that can offer itself. In anxiety what is environmentally ready-to-hand sinks away.'
+  );
 
   const [isComputing, setIsComputing] = useState(false);
-  const [computationStage, setComputationStage] = useState('');
+  const [computationStage, setComputationStage] = useState<string>('');
   const [generatedDiff, setGeneratedDiff] = useState<CandidateGraphDiff | null>(null);
 
   if (!isOpen) return null;
 
   const presets = [
     {
-      title: 'Apophatic Darkness vs. Void',
-      target: 'Pseudo-Dionysius & Cioran: Divine Darkness vs. Groundless Void',
-      text: 'Pseudo-Dionysius describes the divine darkness as "unapproachable light," while Cioran describes insomnia as an abyss stripped of grace. We examine whether noetic intensity warrants metaphysical claims.',
-      questions: '1. What is the boundary between L2 Phenomenological Emptiness and L5 Ontological Claim?\n2. Does subtracting teleology via ∅(Teleology) leave ethical solidarity intact?',
-      nonGoals: 'No apologetic reconciliations. No conversion of silence into positive theology.'
+      title: 'Heidegger: Angst & Nothingness',
+      target: 'Martin Heidegger: Being and Time §40',
+      questions: 'Does ontological anxiety disclose the abyss of groundlessness?',
+      excluded: 'Nihilistic despair, psychological pathology',
+      content: 'In anxiety what is environmentally ready-to-hand sinks away, and the world in its worldhood alone remains.'
     },
     {
-      title: 'The Epistemic Non-Consolation Test (A-4)',
-      target: 'Nietzsche and the Symmetrical Desirability of Severe Nihilism',
-      text: 'Nietzsche criticizes Christian consolation as weakness, yet romanticizes the grim severity of the Eternal Recurrence as an aesthetic triumph. Principle A-4 dictates that the psychological attraction of bleakness is just as evidentially invalid as the comfort of heaven.',
-      questions: '1. How does the desire for existential hardness distort probability assessments?\n2. Can Amor Fati survive without metaphysical fatalism?',
-      nonGoals: 'Avoid psychological moralizing; evaluate strict evidential warrant only.'
+      title: 'Ecclesiastes: Hebel & Solar Vanity',
+      target: 'Qoheleth: Ecclesiastes (Hebel Matrix)',
+      questions: 'Is "vanity of vanities" an ontological emptiness or epistemic futility under the sun?',
+      excluded: 'Moralistic sermonizing, deferred afterlife rewards',
+      content: 'Vanity of vanities, says the Preacher; all is vanity. What does man gain by all the toil at which he toils under the sun?'
     },
     {
-      title: 'Kenotic Silence vs. Neuro-Biological Closure',
-      target: 'Cognitive Deactivation in Deep Meditation and Mystical Apophaticism',
-      text: 'Neuroimaging during unitive mystical absorption reveals default mode network (DMN) quiescence. Naturalists claim causal sufficiency; apophatics claim trans-conceptual disclosure. ROAE must evaluate symmetrical underdetermination.',
-      questions: '1. Does neural deactivation explain away apophatic insight, or merely describe its biological substrate?\n2. Why must the state be declared Underdetermined?',
-      nonGoals: 'Do not declare victory for physicalism or mysticism; map the irreducible aporia.'
+      title: 'Zapffe: The Last Messiah (4 Defenses)',
+      target: 'Peter Wessel Zapffe: Over-Evolution of Consciousness',
+      questions: 'Why are Isolation, Anchoring, Distraction, and Sublimation constitutive defense mechanisms?',
+      excluded: 'Biological optimism, progressivism',
+      content: 'The tragedy of a species becoming unfit for life by over-evolving one faculty: consciousness.'
     }
   ];
 
   const handleApplyPreset = (p: typeof presets[0]) => {
     setTargetText(p.target);
-    setTextContent(p.text);
     setPrimaryQuestions(p.questions);
-    setExcludedNonGoals(p.nonGoals);
+    setExcludedNonGoals(p.excluded);
+    setTextContent(p.content);
   };
 
   const handleRunRoae = async () => {
     setIsComputing(true);
-    setGeneratedDiff(null);
-
-    const contract: ResearchContract = {
-      id: `contract_${Date.now()}`,
-      targetText,
-      primaryQuestions: primaryQuestions.split('\n').filter(Boolean),
-      excludedNonGoals: excludedNonGoals.split('\n').filter(Boolean),
-      sourceHierarchy: 'Primary textual citations > Phenomenological reports > Causal hypotheses',
-      candidateBudget: {
-        maxNodes,
-        maxEdges
-      }
-    };
-
-    // Staged dialectical progression simulation for transparency
-    const stages = [
-      'Stage 1: Enforcing Epistemic Invariants & Bounded Research Contract...',
-      'Stage 2: α (Panoramic Enumeration) & γ (Phenomenological Mining)...',
-      'Stage 3: β (Relational Mapping) & Constructing Dialectical Tension...',
-      'Stage 4: Interpretive Oscillation (Charity Pass ⇌ Suspicion Pass)...',
-      'Stage 5: Adversarial Integrity Protocol (Referee, Prosecutor & Physician)...',
-      'Stage 6: Symmetrical Skepticism Triangulation & Underdetermination Check...',
-      'Stage 7: Formulating Candidate Graph-Diff with L1–L5 Stratum Firewalls...'
-    ];
-
-    for (let i = 0; i < stages.length; i++) {
-      setComputationStage(stages[i]);
-      await new Promise(r => setTimeout(r, 260));
-    }
+    setComputationStage('Stage 1: Extracting experiential reports and building L1–L5 firewall...');
 
     try {
-      const diff = await executeRoaeAnalysis(contract, textContent);
-      graphStorage.addCandidateDiff(diff);
+      setTimeout(() => {
+        setComputationStage('Stage 2: Executing Adversarial Integrity Protocol (Referee critique & Prosecutor case)...');
+      }, 700);
+
+      setTimeout(() => {
+        setComputationStage('Stage 3: Testing Physician diagnostic verdict and Void Operator ∅(X) subtraction...');
+      }, 1400);
+
+      const diff = await executeRoaeAnalysis(
+        {
+          id: `contract_${Date.now()}`,
+          targetText,
+          primaryQuestions: primaryQuestions.split('\n').filter(Boolean),
+          excludedNonGoals: excludedNonGoals.split('\n').filter(Boolean),
+          sourceHierarchy: 'Primary Canonical Text > Historical Context',
+          candidateBudget: {
+            maxNodes,
+            maxEdges
+          }
+        },
+        textContent
+      );
+
       setGeneratedDiff(diff);
       onDiffGenerated(diff);
     } catch (err) {
@@ -114,132 +104,132 @@ export const RoaeWorkspaceModal: React.FC<RoaeWorkspaceModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-      <div className="w-full max-w-4xl bg-[#11112a] border border-indigo-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="w-full max-w-4xl bg-[#1c2128]/95 border border-white/15 rounded-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_16px_36px_rgba(0,0,0,0.65)] overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="p-5 border-b border-indigo-500/20 bg-indigo-950/40 flex items-center justify-between">
+        <div className="p-5 border-b border-white/10 bg-[#14181d]/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl bg-indigo-600/30 border border-indigo-400/40 text-indigo-300 flex items-center justify-center font-bold text-lg">
+            <span className="w-9 h-9 rounded-xl bg-[#242a33] border border-white/10 text-teal-300 flex items-center justify-center font-bold text-lg">
               Ω
             </span>
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <span>ROAE 2.0 — Recursive Ontological Analysis Engine</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-900/60 text-indigo-300 border border-indigo-500/30">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#242a33] text-teal-300 border border-teal-500/30">
                   Gemini 3.8 Flash + Epistemic Firewall
                 </span>
               </h2>
-              <p className="text-xs text-indigo-300">
+              <p className="text-xs text-slate-400">
                 Rigorous dialectical computation with Adversarial Integrity Auditing & Non-Consolation Invariants
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-indigo-900/40 hover:bg-indigo-800 text-indigo-300 flex items-center justify-center transition"
+            className="w-8 h-8 rounded-full bg-[#242a33] hover:bg-[#2e3642] text-slate-300 hover:text-white flex items-center justify-center border border-white/10 transition"
           >
             ✕
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto space-y-6 text-xs text-indigo-100">
+        <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-200">
           {/* Preset Buttons */}
           <div className="space-y-2">
-            <span className="text-xs font-semibold text-indigo-300">Dialectical Focus Presets:</span>
+            <span className="text-xs font-semibold text-slate-300">Dialectical Focus Presets:</span>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {presets.map((p, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleApplyPreset(p)}
-                  className="p-2.5 text-left rounded-xl bg-indigo-950/30 hover:bg-indigo-900/50 border border-indigo-500/20 text-indigo-200 transition space-y-1"
+                  className="p-2.5 text-left rounded-xl bg-[#14181d]/80 hover:bg-[#242a33] border border-white/10 text-slate-200 transition space-y-1"
                 >
-                  <div className="font-semibold text-xs text-indigo-300">{p.title}</div>
-                  <div className="text-[11px] text-gray-400 line-clamp-2">{p.target}</div>
+                  <div className="font-semibold text-xs text-amber-300">{p.title}</div>
+                  <div className="text-[11px] text-slate-400 line-clamp-2">{p.target}</div>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Research Contract Configuration */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-950/20 p-4 rounded-xl border border-indigo-500/20">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#14181d]/80 p-4 rounded-xl border border-white/10">
             <div className="space-y-3">
               <div>
-                <label className="block font-semibold text-indigo-300 mb-1">Target Philosophical Subject:</label>
+                <label className="block font-semibold text-slate-300 mb-1">Target Philosophical Subject:</label>
                 <input
                   type="text"
                   value={targetText}
                   onChange={e => setTargetText(e.target.value)}
-                  className="w-full bg-[#0d0d22] border border-indigo-500/30 rounded-lg p-2 text-xs text-white outline-none focus:border-indigo-400"
+                  className="w-full bg-[#1c2128] border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-sky-400"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-indigo-300 mb-1">Primary Analytical Questions:</label>
+                <label className="block font-semibold text-slate-300 mb-1">Primary Analytical Questions:</label>
                 <textarea
                   rows={3}
                   value={primaryQuestions}
                   onChange={e => setPrimaryQuestions(e.target.value)}
-                  className="w-full bg-[#0d0d22] border border-indigo-500/30 rounded-lg p-2 text-xs text-white outline-none focus:border-indigo-400 font-mono"
+                  className="w-full bg-[#1c2128] border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-sky-400 font-mono"
                 />
               </div>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block font-semibold text-indigo-300 mb-1">Explicitly Excluded Non-Goals:</label>
+                <label className="block font-semibold text-slate-300 mb-1">Explicitly Excluded Non-Goals:</label>
                 <textarea
                   rows={2}
                   value={excludedNonGoals}
                   onChange={e => setExcludedNonGoals(e.target.value)}
-                  className="w-full bg-[#0d0d22] border border-indigo-500/30 rounded-lg p-2 text-xs text-white outline-none focus:border-indigo-400 font-mono"
+                  className="w-full bg-[#1c2128] border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-sky-400 font-mono"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-indigo-300 mb-1">Max Candidate Nodes:</label>
+                  <label className="block font-semibold text-slate-300 mb-1">Max Candidate Nodes:</label>
                   <input
                     type="number"
                     min={2}
                     max={15}
                     value={maxNodes}
                     onChange={e => setMaxNodes(parseInt(e.target.value) || 5)}
-                    className="w-full bg-[#0d0d22] border border-indigo-500/30 rounded-lg p-2 text-xs text-white outline-none"
+                    className="w-full bg-[#1c2128] border border-white/10 rounded-lg p-2 text-xs text-white outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-indigo-300 mb-1">Max Candidate Edges:</label>
+                  <label className="block font-semibold text-slate-300 mb-1">Max Candidate Edges:</label>
                   <input
                     type="number"
                     min={2}
                     max={20}
                     value={maxEdges}
                     onChange={e => setMaxEdges(parseInt(e.target.value) || 6)}
-                    className="w-full bg-[#0d0d22] border border-indigo-500/30 rounded-lg p-2 text-xs text-white outline-none"
+                    className="w-full bg-[#1c2128] border border-white/10 rounded-lg p-2 text-xs text-white outline-none"
                   />
                 </div>
               </div>
             </div>
 
             <div className="md:col-span-2">
-              <label className="block font-semibold text-indigo-300 mb-1">Passage / Primary Text Context:</label>
+              <label className="block font-semibold text-slate-300 mb-1">Passage / Primary Text Context:</label>
               <textarea
                 rows={3}
                 value={textContent}
                 onChange={e => setTextContent(e.target.value)}
                 placeholder="Enter philosophical text, citations, or experiential report..."
-                className="w-full bg-[#0d0d22] border border-indigo-500/30 rounded-lg p-2 text-xs text-white outline-none focus:border-indigo-400 font-serif"
+                className="w-full bg-[#1c2128] border border-white/10 rounded-lg p-2 text-xs text-white outline-none focus:border-sky-400 font-serif"
               />
             </div>
           </div>
 
           {/* Computation Status Indicator */}
           {isComputing && (
-            <div className="p-4 rounded-xl bg-indigo-950/60 border border-indigo-500/40 text-center space-y-2 animate-pulse">
-              <div className="font-semibold text-sm text-indigo-200">
+            <div className="p-4 rounded-xl bg-[#14181d] border border-sky-400/30 text-center space-y-2 animate-pulse">
+              <div className="font-semibold text-sm text-sky-300">
                 Executing Multi-Stage Dialectical Computation...
               </div>
-              <div className="text-xs text-indigo-400 font-mono">
+              <div className="text-xs text-slate-400 font-mono">
                 {computationStage}
               </div>
             </div>
@@ -255,11 +245,11 @@ export const RoaeWorkspaceModal: React.FC<RoaeWorkspaceModalProps> = ({
                     {generatedDiff.runId}
                   </span>
                 </div>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-slate-400">
                   {generatedDiff.proposedNodes.length} nodes • {generatedDiff.proposedEdges.length} edges
                 </span>
               </div>
-              <p className="text-gray-300 text-xs">
+              <p className="text-slate-300 text-xs">
                 Candidate nodes have been stratified across L1–L5 firewalls and subjected to the Adversarial Integrity Protocol (Referee, Prosecutor & Physician). Open the <strong>Candidate Diff Review Workspace</strong> to inspect, verify warrants, and commit to live topology.
               </p>
             </div>
@@ -267,14 +257,14 @@ export const RoaeWorkspaceModal: React.FC<RoaeWorkspaceModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-indigo-500/20 bg-indigo-950/40 flex items-center justify-between">
-          <div className="text-xs text-gray-400">
+        <div className="p-4 border-t border-white/10 bg-[#14181d]/50 flex items-center justify-between">
+          <div className="text-xs text-slate-400">
             Sovereign Protocol: Live graph is NEVER directly mutated; candidate diffs require human audit.
           </div>
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-500/30 transition"
+              className="px-4 py-2 rounded-xl text-xs bg-[#242a33] hover:bg-[#2e3642] text-slate-300 border border-white/10 transition"
             >
               Cancel
             </button>
@@ -283,8 +273,8 @@ export const RoaeWorkspaceModal: React.FC<RoaeWorkspaceModalProps> = ({
               disabled={isComputing || !targetText.trim()}
               className={`px-5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
                 isComputing || !targetText.trim()
-                  ? 'bg-indigo-900/40 text-indigo-400 cursor-not-allowed border border-indigo-800/40'
-                  : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30'
+                  ? 'bg-[#242a33] text-slate-500 cursor-not-allowed border border-white/10'
+                  : 'bg-gradient-to-b from-[#3a4250] to-[#282e38] hover:from-[#444e5f] hover:to-[#2e3642] text-white border border-slate-300/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_2px_8px_rgba(0,0,0,0.4)]'
               }`}
             >
               {isComputing ? 'Computing Dialectic...' : 'Run ROAE 2.0 Analysis Engine'}

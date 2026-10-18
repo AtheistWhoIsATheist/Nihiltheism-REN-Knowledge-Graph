@@ -16,7 +16,9 @@ import { CandidateDiffReviewModal } from './components/CandidateDiffReviewModal'
 import { ResidueManagementModal } from './components/ResidueManagementModal';
 import { NihiltheisticSuiteModal } from './components/NihiltheisticSuiteModal';
 import { Journal314CorpusModal } from './components/Journal314CorpusModal';
+import { DialecticalPathfinderModal } from './components/DialecticalPathfinderModal';
 import { graphStorage } from './services/storage/GraphStorage';
+import { SubgraphDensityMode, DialecticalPathResult } from './services/storage/GraphIndex';
 import { GraphNode } from './types/graph';
 import { CandidateGraphDiff } from './types/roae';
 
@@ -31,6 +33,11 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+
+  // Performance Governor & Dialectical Synthesis State
+  const [densityMode, setDensityMode] = useState<SubgraphDensityMode>('core');
+  const [isPathfinderOpen, setIsPathfinderOpen] = useState(false);
+  const [highlightedPath, setHighlightedPath] = useState<DialecticalPathResult | null>(null);
 
   // Modals state
   const [isRoaeOpen, setIsRoaeOpen] = useState(false);
@@ -57,13 +64,9 @@ export default function App() {
   const canonicalNodes = useMemo(() => graphStorage.getCanonicalNodes(), []);
   const canonicalEdges = useMemo(() => graphStorage.getCanonicalEdges(), []);
 
-  // Quick node map for neighbor lookups in inspector
+  // Quick node map for neighbor lookups in inspector via O(1) GraphIndex
   const nodesMap = useMemo(() => {
-    const map = new Map<string, GraphNode>();
-    for (const n of nodes) {
-      map.set(n.id, n);
-    }
-    return map;
+    return graphStorage.getIndex().nodeById;
   }, [nodes]);
 
   const handleSelectNode = useCallback((node: GraphNode) => {
@@ -73,6 +76,15 @@ export default function App() {
   const handleClearDynamicData = useCallback(() => {
     graphStorage.clearDynamicData();
     setSelectedNode(null);
+    setHighlightedPath(null);
+  }, []);
+
+  const handlePruneOrphans = useCallback(() => {
+    const prunedCount = graphStorage.pruneDynamicOrphans();
+    if (prunedCount > 0) {
+      setNodes(graphStorage.getAllNodes());
+      setEdges(graphStorage.getAllEdges());
+    }
   }, []);
 
   const pendingDiffsCount = useMemo(() => {
@@ -86,7 +98,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#070711] text-[#f6f7ff] font-sans select-none">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#14181d] text-slate-100 font-sans select-none">
       {/* Top Application Header */}
       <Header
         totalNodes={nodes.length}
@@ -101,6 +113,8 @@ export default function App() {
         setSearchQuery={setSearchQuery}
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
+        densityMode={densityMode}
+        setDensityMode={setDensityMode}
         onOpenRoae={() => setIsRoaeOpen(true)}
         onOpenDiffReview={() => setIsDiffReviewOpen(true)}
         onOpenResidue={() => setIsResidueOpen(true)}
@@ -109,6 +123,8 @@ export default function App() {
         onOpenIngestion={() => setIsIngestionOpen(true)}
         onOpenLedger={() => setIsLedgerOpen(true)}
         onOpenExport={() => setIsExportOpen(true)}
+        onOpenPathfinder={() => setIsPathfinderOpen(true)}
+        onPruneOrphans={handlePruneOrphans}
       />
 
       {/* Main Visualization Viewport */}
@@ -121,6 +137,8 @@ export default function App() {
             selectedCategory={selectedCategory}
             onSelectNode={handleSelectNode}
             selectedNodeId={selectedNode?.id || null}
+            densityMode={densityMode}
+            highlightedPath={highlightedPath}
           />
         ) : (
           <HypermapView
@@ -133,6 +151,15 @@ export default function App() {
       </main>
 
       {/* Modals & Slide-out Drawers */}
+      <DialecticalPathfinderModal
+        isOpen={isPathfinderOpen}
+        onClose={() => setIsPathfinderOpen(false)}
+        selectedNode={selectedNode}
+        onIlluminatePath={result => setHighlightedPath(result)}
+        currentHighlightedPath={highlightedPath}
+        onSelectNode={handleSelectNode}
+      />
+
       <NodeInspectorModal
         node={selectedNode}
         edges={edges}
